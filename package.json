@@ -13,6 +13,7 @@
     "@nuxt/eslint": "^0.5.7",
     "@nuxt/icon": "^1.5.1",
     "@vueuse/core": "^11.0.3",
+    "apicalypse": "^0.3.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-vue-next": "^0.441.0",
