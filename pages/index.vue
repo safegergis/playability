@@ -7,7 +7,7 @@
         class="w-64 mr-2"
         placeholder="Search games"
       />
-      <Button variant="outline" type="icon">
+      <Button variant="outline" type="icon" @click="search">
         <Icon name="formkit:search" />
       </Button>
     </div>
@@ -15,9 +15,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-
 const searchQuery = ref("");
+
+const search = () => {
+  const encodedQuery = encodeURIComponent(searchQuery.value);
+  navigateTo(`/search/${encodedQuery}`);
+};
 </script>
 
 <style></style>
