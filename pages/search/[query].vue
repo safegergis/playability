@@ -36,14 +36,13 @@ const searchQuery = decodeURIComponent(useRoute().params.query as string);
 
 const searchResults = ref<SearchApiResponse>();
 
-onMounted(async () => {
-  const response = await useFetch("/api/search", {
-    query: {
-      s: searchQuery,
-    },
-  });
-  searchResults.value = response.data.value as SearchApiResponse;
+const response = await useFetch("/api/search", {
+  query: {
+    s: searchQuery,
+  },
 });
+searchResults.value = response.data.value as SearchApiResponse;
+
 const onSearchResultClick = (id: number) => {
   navigateTo(`/games/${id}`);
 };

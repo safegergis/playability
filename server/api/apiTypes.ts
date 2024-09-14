@@ -16,6 +16,7 @@ export interface Game {
   platforms?: {
     id: number;
     name: string;
+    icon: string;
   }[];
   involved_companies?: {
     id: number;
@@ -24,6 +25,7 @@ export interface Game {
       name: string;
     };
   }[];
+  coverArt?: string;
 }
 
 export interface SearchResult {
