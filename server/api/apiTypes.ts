@@ -13,11 +13,7 @@ export interface Game {
       }
     | string;
   summary?: string;
-  platforms?: {
-    id: number;
-    name: string;
-    icon: string;
-  }[];
+  platforms?: number[];
   involved_companies?: {
     id: number;
     company: {

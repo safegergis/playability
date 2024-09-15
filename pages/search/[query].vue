@@ -36,12 +36,14 @@ const searchQuery = decodeURIComponent(useRoute().params.query as string);
 
 const searchResults = ref<SearchApiResponse>();
 
-const response = await useFetch("/api/search", {
-  query: {
-    s: searchQuery,
-  },
-});
-searchResults.value = response.data.value as SearchApiResponse;
+const { data } = await useFetch<SearchApiResponse>(
+  `http://localhost:8080/search/${searchQuery}`,
+  {
+    method: "GET",
+  }
+);
+console.log(data.value);
+searchResults.value = JSON.parse(data.value) as SearchApiResponse;
 
 const onSearchResultClick = (id: number) => {
   navigateTo(`/games/${id}`);
