@@ -13,7 +13,7 @@
             v-for="result in searchResults"
             :key="result.id"
             class="bg-stone-800 rounded-lg p-4 shadow-md"
-            @click="onSearchResultClick(result.game)"
+            @click="onSearchResultClick(result.id)"
           >
             <h2 class="text-xl font-semibold text-white">{{ result.name }}</h2>
           </li>
@@ -25,26 +25,27 @@
       >
         No results found for "{{ searchQuery }}"
       </div>
-      <div v-else class="text-white text-xl">Loading...</div>
+      <div v-if="status === 'pending'" class="text-white text-xl">
+        Loading...
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import type { SearchApiResponse } from "~/server/api/apiTypes";
-const searchQuery = decodeURIComponent(useRoute().params.query as string);
+const searchQuery = useRoute().params.query as string;
 
-const searchResults = ref<SearchApiResponse>();
-
-const { data } = await useFetch("http://localhost:8080/search", {
-  method: "GET",
-  query: {
-    search: searchQuery,
-  },
-});
-console.log(data.value);
-searchResults.value = JSON.parse(data.value as string);
-
+const { data, status } = await useFetch<SearchApiResponse>(
+  "http://localhost:8080/search",
+  {
+    method: "GET",
+    query: {
+      search: searchQuery,
+    },
+  }
+);
+const searchResults = ref(JSON.parse(data.value as string));
 const onSearchResultClick = (id: number) => {
   navigateTo(`/games/${id}`);
 };

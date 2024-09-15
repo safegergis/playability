@@ -18,7 +18,7 @@
 const searchQuery = ref("");
 
 const onSearch = () => {
-  navigateTo(`/search/${encodeURIComponent(searchQuery.value)}`, {
+  navigateTo(`/search/${searchQuery.value}`, {
     external: false,
   });
 };

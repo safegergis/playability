@@ -35,8 +35,11 @@ func main() {
 
 	http.ListenAndServe(":8080", router)
 }
-
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
 func searchHandler(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	searchTerm := r.URL.Query().Get("search")
 
 	err := godotenv.Load()
@@ -46,9 +49,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
 
-	postBody := fmt.Sprintf("fields id,game,name; search \"%s\"; limit 50;", searchTerm)
+	postBody := fmt.Sprintf("fields id,name;where platforms = (167,168,48,49,6,130); search \"%s\"; limit 50;", searchTerm)
 
-	body, err := makeIgdbRequest(postBody, igdbSecret, "search")
+	body, err := makeIgdbRequest(postBody, igdbSecret, "games")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,12 +62,14 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func gamesHandler(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	gameID := r.URL.Query().Get("id")
 	body, err := getGame(gameID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+	log.Println(string(body))
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
 }
@@ -111,7 +116,7 @@ func getGame(gameID string) ([]byte, error) {
 	if err != nil {
 		log.Fatal("Error marshalling game data:", err)
 	}
-	log.Println(string(body))
+	
 	return body, nil
 
 }
