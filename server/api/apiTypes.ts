@@ -26,12 +26,5 @@ export interface Game {
 
 export interface SearchResult {
   id: number;
-  game: number;
   name: string;
 }
-
-export type ApiResponse<T> = T[];
-
-export type GameApiResponse = ApiResponse<Game>;
-export type SearchApiResponse = ApiResponse<SearchResult>;
-export type CoverApiResponse = ApiResponse<Cover>;
