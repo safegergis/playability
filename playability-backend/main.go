@@ -30,15 +30,14 @@ type CoverArt struct {
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/search/{searchTerm}", searchHandler).Methods("GET")
-	router.HandleFunc("/games/{gameID}", gamesHandler).Methods("GET")
+	router.HandleFunc("/search", searchHandler).Methods("GET")
+	router.HandleFunc("/games", gamesHandler).Methods("GET")
 
 	http.ListenAndServe(":8080", router)
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	searchTerm := vars["searchTerm"]
+	searchTerm := r.URL.Query().Get("search")
 
 	err := godotenv.Load()
 	if err != nil {
@@ -60,8 +59,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func gamesHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	gameID := vars["gameID"]
+	gameID := r.URL.Query().Get("id")
 	body, err := getGame(gameID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)

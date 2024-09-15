@@ -7,17 +7,21 @@
         class="w-64 mr-2"
         placeholder="Search games"
       />
-      <NuxtLink :to="`/search/${encodeURIComponent(searchQuery)}`">
-        <Button variant="outline" type="icon">
-          <Icon name="formkit:search" />
-        </Button>
-      </NuxtLink>
+      <Button variant="outline" type="icon" @click="onSearch">
+        <Icon name="formkit:search" />
+      </Button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 const searchQuery = ref("");
+
+const onSearch = () => {
+  navigateTo(`/search/${encodeURIComponent(searchQuery.value)}`, {
+    external: false,
+  });
+};
 </script>
 
 <style></style>

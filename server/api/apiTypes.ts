@@ -21,7 +21,7 @@ export interface Game {
       name: string;
     };
   }[];
-  coverArt?: string;
+  cover_art?: string;
 }
 
 export interface SearchResult {

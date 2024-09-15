@@ -59,14 +59,14 @@ const platformDefinitions = [
 const gameID = useRoute().params.id as string;
 const game = ref<Game | null>();
 
-const response = await useFetch<Game[]>(
-  `http://localhost:8080/games/${gameID}`,
-  {
-    method: "GET",
-  }
-);
+const response = await useFetch<Game[]>("http://localhost:8080/games", {
+  method: "GET",
+  query: {
+    id: gameID,
+  },
+});
 console.log("response: ", response.data.value);
-if (response) {
+if (response.data.value) {
   game.value = response.data.value[0];
 }
 
@@ -75,21 +75,6 @@ const platforms = computed(() => {
     game.value?.platforms?.includes(platform.id)
   );
 });
-
-/*
-if (response.error) {
-  error.value = {
-    statusCode: response.error.statusCode,
-    statusMessage: response.error.statusMessage,
-    message: `Failed to load game data: ${response.error.message}`,
-  };
-} else if (!response) {
-  error.value = {
-    statusCode: 404,
-    statusMessage: "Not Found",
-    message: "Game not found",
-  };
-  */
 </script>
 
 <style></style>
