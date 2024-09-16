@@ -11,10 +11,13 @@
         <li
           v-for="result in searchResults"
           :key="result.id"
-          class="bg-stone-800 rounded-lg p-4 shadow-md"
           @click="onSearchResultClick(result.id)"
         >
-          <h2 class="text-xl font-semibold text-white">{{ result.name }}</h2>
+          <Card
+            class="bg-stone-800 rounded-lg p-4 shadow-md transition ease-in-out delay-150 hover:scale-105"
+          >
+            <h2 class="text-xl font-semibold text-white">{{ result.name }}</h2>
+          </Card>
         </li>
       </ul>
     </div>
@@ -29,7 +32,6 @@
 </template>
 
 <script lang="ts" setup>
-import type { SearchResult } from "~/server/api/apiTypes";
 const searchQuery = useRoute().params.query as string;
 
 const { data, status } = await useFetch<string>(

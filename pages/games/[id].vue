@@ -34,11 +34,51 @@
             {{ game.summary }}
           </p>
           <!-- Placeholder for future table -->
-          <div class="bg-gray-800 p-4 rounded-lg">
-            <p class="text-white text-center">
-              Additional game information will be displayed here
-            </p>
-          </div>
+          <Card class="bg-gray-800 p-4 rounded-lg">
+            <h2 class="text-xl font-semibold text-white mb-4">
+              Accessibility Features
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div class="bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-lg font-medium text-white mb-2">
+                  Colorblind Modes
+                </h3>
+                <p class="text-gray-300">
+                  {{ game.color_blind ? "Supported" : "Not supported" }}
+                </p>
+              </div>
+              <div class="bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-lg font-medium text-white mb-2">
+                  Closed Captions
+                </h3>
+                <p class="text-gray-300">
+                  {{ game.closed_captions ? "Available" : "Not available" }}
+                </p>
+              </div>
+              <div class="bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-lg font-medium text-white mb-2">
+                  Controller Support
+                </h3>
+                <p class="text-gray-300">
+                  {{
+                    game.full_controller_support
+                      ? "Adjustable"
+                      : "Not adjustable"
+                  }}
+                </p>
+              </div>
+              <div class="bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-lg font-medium text-white mb-2">
+                  Controller Remapping
+                </h3>
+                <p class="text-gray-300">
+                  {{
+                    game.controller_remapping ? "Supported" : "Not supported"
+                  }}
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
       <p v-else class="text-white text-xl text-center">Loading...</p>
@@ -47,8 +87,6 @@
 </template>
 
 <script lang="ts" setup>
-import type { Game } from "~/server/api/apiTypes";
-
 const platformDefinitions = [
   { id: 48, name: "Playstation", icon: "mdi:sony-playstation" },
   { id: 49, name: "Xbox", icon: "mdi:microsoft-xbox" },
