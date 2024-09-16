@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -23,10 +22,10 @@ type Game struct {
 	InvolvedCompanies     []int  `json:"involved_companies"`
 	ExternalGames         []int  `json:"external_games"`
 	CoverArt              string `json:"cover_art"`
-	ClosedCaptions        *bool  `json:"closed_captions"`
-	ColorBlind            *bool  `json:"color_blind"`
-	FullControllerSupport *bool  `json:"full_controller_support"`
-	ControllerRemapping   *bool  `json:"controller_remapping"`
+	ClosedCaptions        string `json:"closed_captions"`
+	ColorBlind            string `json:"color_blind"`
+	FullControllerSupport string `json:"full_controller_support"`
+	ControllerRemapping   string `json:"controller_remapping"`
 	SteamAvailability     bool   `json:"steam_availability"`
 }
 
@@ -137,10 +136,10 @@ func getGame(gameID string) ([]byte, error) {
 	// Fetch accessibility information from PCGamingWiki
 	// Closed captions
 
-	var closedCaptions *bool
-	var colorBlind *bool
-	var fullControllerSupport *bool
-	var controllerRemapping *bool
+	closedCaptions := "unknown"	
+	colorBlind := "unknown"
+	fullControllerSupport := "unknown"
+	controllerRemapping := "unknown"
 	if steamAvailability {
 		resp, err := http.Get(fmt.Sprintf("https://www.pcgamingwiki.com/w/api.php?action=cargoquery&tables=Infobox_game,Audio&fields=Audio.Closed_captions&join_on=Infobox_game._pageID=Audio._PageID&where=Infobox_game.Steam_AppID%%20HOLDS%%20%%22%s%%22&format=json", steamID))
 		if err != nil {
@@ -156,13 +155,12 @@ func getGame(gameID string) ([]byte, error) {
 			log.Fatal("Error unmarshalling PC Gaming Wiki closed captions:", err)
 		}
 		if len(response.CargoQuery) != 0 {
-			b, err := strconv.ParseBool(response.CargoQuery[0].Title.ClosedCaptions)
-			closedCaptions = &b
+			closedCaptions = response.CargoQuery[0].Title.ClosedCaptions
 			if err != nil {
 				log.Fatal("Error parsing closed captions:", err)
 			}
 		} else {
-			closedCaptions = nil
+			closedCaptions = "unknown"
 		}
 
 		// Color blind mode
@@ -181,13 +179,12 @@ func getGame(gameID string) ([]byte, error) {
 			log.Fatal("Error unmarshalling PC Gaming Wiki color blind mode:", err)
 		}
 		if len(response2.CargoQuery) != 0 {
-			b, err := strconv.ParseBool(response2.CargoQuery[0].Title.ColorBlind)
-			colorBlind = &b
+			colorBlind = response2.CargoQuery[0].Title.ColorBlind
 			if err != nil {
 				log.Fatal("Error parsing color blind mode:", err)
 			}
 		} else {
-			colorBlind = nil
+			colorBlind = "unknown"
 		}
 
 		// Controller support and remapping
@@ -205,18 +202,17 @@ func getGame(gameID string) ([]byte, error) {
 			log.Fatal("Error unmarshalling PC Gaming Wiki controller support and remapping:", err)
 		}
 		if len(response3.CargoQuery) != 0 {
-			b, err := strconv.ParseBool(response3.CargoQuery[0].Title.FullControllerSupport)
-			fullControllerSupport = &b
+			fullControllerSupport = response3.CargoQuery[0].Title.FullControllerSupport
 			if err != nil {
 				log.Fatal("Error parsing full controller support:", err)
 			}
-			controllerRemapping = &b
+			controllerRemapping = response3.CargoQuery[0].Title.ControllerRemapping
 			if err != nil {
 				log.Fatal("Error parsing controller remapping:", err)
 			}
 		} else {
-			fullControllerSupport = nil
-			controllerRemapping = nil
+			fullControllerSupport = "unknown"
+			controllerRemapping = "unknown"
 		}
 	}
 

@@ -33,8 +33,8 @@
           <p v-if="game.summary" class="text-white text-lg mb-8">
             {{ game.summary }}
           </p>
-          <!-- Placeholder for future table -->
-          <Card class="bg-gray-800 p-4 rounded-lg">
+
+          <Card v-if="game" class="bg-gray-800 p-4 rounded-lg:">
             <h2 class="text-xl font-semibold text-white mb-4">
               Accessibility Features
             </h2>
@@ -44,13 +44,7 @@
                   Colorblind Modes
                 </h3>
                 <p class="text-gray-300">
-                  {{
-                    game.color_blind === null
-                      ? "Data not available"
-                      : game.color_blind
-                      ? "Supported"
-                      : "Not supported"
-                  }}
+                  {{ parseAccessibility(game.color_blind || "unknown") }}
                 </p>
               </div>
               <div class="bg-gray-700 p-4 rounded-lg">
@@ -58,13 +52,7 @@
                   Closed Captions
                 </h3>
                 <p class="text-gray-300">
-                  {{
-                    game.closed_captions === null
-                      ? "Data not available"
-                      : game.closed_captions
-                      ? "Available"
-                      : "Not available"
-                  }}
+                  {{ parseAccessibility(game.closed_captions || "unknown") }}
                 </p>
               </div>
               <div class="bg-gray-700 p-4 rounded-lg">
@@ -73,11 +61,9 @@
                 </h3>
                 <p class="text-gray-300">
                   {{
-                    game.full_controller_support === null
-                      ? "Data not available"
-                      : game.full_controller_support
-                      ? "Adjustable"
-                      : "Not adjustable"
+                    parseAccessibility(
+                      game.full_controller_support || "unknown"
+                    )
                   }}
                 </p>
               </div>
@@ -87,11 +73,7 @@
                 </h3>
                 <p class="text-gray-300">
                   {{
-                    game.controller_remapping === null
-                      ? "Data not available"
-                      : game.controller_remapping
-                      ? "Supported"
-                      : "Not supported"
+                    parseAccessibility(game.controller_remapping || "unknown")
                   }}
                 </p>
               </div>
@@ -106,10 +88,12 @@
 
 <script lang="ts" setup>
 const platformDefinitions = [
-  { id: 48, name: "Playstation", icon: "mdi:sony-playstation" },
-  { id: 49, name: "Xbox", icon: "mdi:microsoft-xbox" },
+  { id: 48, name: "Playstation 4", icon: "mdi:sony-playstation" },
+  { id: 49, name: "Xbox One", icon: "mdi:microsoft-xbox" },
   { id: 6, name: "PC", icon: "mdi:steam" },
   { id: 130, name: "Nintendo Switch", icon: "mdi:nintendo-switch" },
+  { id: 167, name: "Playstation 5", icon: "mdi:sony-playstation" },
+  { id: 168, name: "Xbox Series X", icon: "mdi:microsoft-xbox" },
 ];
 
 const gameID = useRoute().params.id as string;
@@ -124,7 +108,36 @@ const response = await useFetch<Game>("http://localhost:8080/games", {
 console.log("response: ", response.data.value);
 if (response.data.value) {
   game.value = response.data.value;
+  if (
+    game.value.platforms?.includes(48) &&
+    game.value.platforms?.includes(167)
+  ) {
+    game.value.platforms = game.value.platforms.filter(
+      (platform) => platform !== 48
+    );
+  }
+  if (
+    game.value.platforms?.includes(49) &&
+    game.value.platforms?.includes(168)
+  ) {
+    game.value.platforms = game.value.platforms.filter(
+      (platform) => platform !== 49
+    );
+  }
 }
+const parseAccessibility = (resp: string) => {
+  if (resp === "unknown") {
+    return "Data not available";
+  } else if (resp === "limited") {
+    return "Limited implementation";
+  } else if (resp === "true") {
+    return "Supported";
+  } else if (resp === "false") {
+    return "Not supported";
+  } else {
+    return "Data not available";
+  }
+};
 
 const platforms = computed(() => {
   return platformDefinitions.filter((platform) =>

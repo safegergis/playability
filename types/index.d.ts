@@ -23,10 +23,10 @@ declare global {
       };
     }[];
     cover_art?: string;
-    color_blind?: boolean;
-    closed_captions?: boolean;
-    full_controller_support?: boolean;
-    controller_remapping?: boolean;
+    color_blind?: string;
+    closed_captions?: string;
+    full_controller_support?: string;
+    controller_remapping?: string;
   }
 
   interface SearchResult {
