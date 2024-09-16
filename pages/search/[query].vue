@@ -34,7 +34,7 @@
 <script lang="ts" setup>
 const searchQuery = useRoute().params.query as string;
 
-const { data, status } = await useFetch<string>(
+const { data, status } = await useFetch<SearchResult[]>(
   "http://localhost:8080/search",
   {
     method: "GET",
@@ -43,7 +43,9 @@ const { data, status } = await useFetch<string>(
     },
   }
 );
-const searchResults = ref<SearchResult[]>(JSON.parse(data.value as string));
+
+const searchResults = ref<SearchResult[]>(data.value ?? []);
+
 const onSearchResultClick = (id: number) => {
   navigateTo(`/games/${id}`);
 };

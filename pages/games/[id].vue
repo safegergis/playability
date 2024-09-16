@@ -44,7 +44,13 @@
                   Colorblind Modes
                 </h3>
                 <p class="text-gray-300">
-                  {{ game.color_blind ? "Supported" : "Not supported" }}
+                  {{
+                    game.color_blind === null
+                      ? "Data not available"
+                      : game.color_blind
+                      ? "Supported"
+                      : "Not supported"
+                  }}
                 </p>
               </div>
               <div class="bg-gray-700 p-4 rounded-lg">
@@ -52,7 +58,13 @@
                   Closed Captions
                 </h3>
                 <p class="text-gray-300">
-                  {{ game.closed_captions ? "Available" : "Not available" }}
+                  {{
+                    game.closed_captions === null
+                      ? "Data not available"
+                      : game.closed_captions
+                      ? "Available"
+                      : "Not available"
+                  }}
                 </p>
               </div>
               <div class="bg-gray-700 p-4 rounded-lg">
@@ -61,7 +73,9 @@
                 </h3>
                 <p class="text-gray-300">
                   {{
-                    game.full_controller_support
+                    game.full_controller_support === null
+                      ? "Data not available"
+                      : game.full_controller_support
                       ? "Adjustable"
                       : "Not adjustable"
                   }}
@@ -73,7 +87,11 @@
                 </h3>
                 <p class="text-gray-300">
                   {{
-                    game.controller_remapping ? "Supported" : "Not supported"
+                    game.controller_remapping === null
+                      ? "Data not available"
+                      : game.controller_remapping
+                      ? "Supported"
+                      : "Not supported"
                   }}
                 </p>
               </div>
@@ -97,7 +115,7 @@ const platformDefinitions = [
 const gameID = useRoute().params.id as string;
 const game = ref<Game | null>();
 
-const response = await useFetch<Game[]>("http://localhost:8080/games", {
+const response = await useFetch<Game>("http://localhost:8080/games", {
   method: "GET",
   query: {
     id: gameID,
@@ -105,7 +123,7 @@ const response = await useFetch<Game[]>("http://localhost:8080/games", {
 });
 console.log("response: ", response.data.value);
 if (response.data.value) {
-  game.value = response.data.value[0];
+  game.value = response.data.value;
 }
 
 const platforms = computed(() => {
