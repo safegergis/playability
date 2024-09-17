@@ -7,12 +7,13 @@ import (
 	"net/http"
 	"playability/auth"
 	"playability/data"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-
 	"github.com/go-chi/cors"
 	"github.com/go-chi/jwtauth/v5"
+	_ "github.com/lib/pq"
 )
 
 type Server struct {
@@ -110,24 +111,26 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	// Convert all fields of User to lowercase
+	user.Username = strings.ToLower(user.Username)
+	user.Email = strings.ToLower(user.Email)
+	// Note: We don't convert the password to lowercase as it should remain case-sensitive
 
-	hash, err := auth.GetHash(user.Password)
+
+
+	err := data.InsertUser(server.DB, user)
 	if err != nil {
-		log.Println("Error:", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		if err.Error() == "email is already in use" {
+			http.Error(w, "email is already in use", http.StatusConflict)
+			return
+		} else if err.Error() == "username is already in use" {
+			http.Error(w, "username is already in use", http.StatusConflict)
+			return
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
-	query := `INSERT INTO users (username, email, hash, num_reports) VALUES ($1, $2, $3, $4)`
-	result, err := server.DB.Exec(query, user.Username, user.Email, hash, 0)
-	if err != nil {
-		log.Println("Error:", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	recordId, _ := result.LastInsertId()
-	response := auth.Response{
-		ID: int(recordId),
-	}
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
 }

@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex items-center justify-center">
-    <Card class="max-w-md shadow-md rounded-md p-6">
+    <Card class="w-1/2 min-w-96 shadow-md rounded-md p-6">
       <CardHeader>
         <CardTitle class="text-2xl font-semibold text-center"
           >User Registration</CardTitle
@@ -21,8 +21,12 @@
               type="text"
               placeholder="Enter your username"
               class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              @input="uniqueUsername = false"
             />
             <ErrorMessage name="username" class="text-red-500 text-sm mt-1" />
+            <p v-if="uniqueUsername" class="text-red-500 text-sm mt-1">
+              Username is already in use
+            </p>
           </div>
 
           <div class="mb-4">
@@ -33,8 +37,12 @@
               type="email"
               placeholder="Enter your email"
               class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              @input="uniqueEmail = false"
             />
             <ErrorMessage name="email" class="text-red-500 text-sm mt-1" />
+            <p v-if="uniqueEmail" class="text-red-500 text-sm mt-1">
+              Email is already in use
+            </p>
           </div>
 
           <div class="mb-4">
@@ -84,6 +92,9 @@ import * as yup from "yup";
 import { useToast } from "@/components/ui/toast";
 const { toast } = useToast();
 
+const uniqueEmail = ref(false);
+const uniqueUsername = ref(false);
+
 // Define the validation schema using Yup
 const schema = yup.object({
   username: yup
@@ -116,26 +127,35 @@ const onSubmit = async (values: {
     email: values.email,
     password: values.password,
   };
-
   // Reset form values after submission
 
-  const { data, error } = await useAsyncData("register", () =>
+  const { error } = await useAsyncData("register", () =>
     $fetch("http://localhost:8080/user/register", {
       method: "POST",
       body: registrationData,
     })
   );
-  if (error.value) {
+  if (error.value && error.value.statusCode !== 409) {
+    console.log(error.value);
     console.error("Registration error:", error.value);
     toast({
       title: "Registration failed!",
       description: "Please try again.",
     });
+  } else if (error.value && error.value.statusCode === 409) {
+    console.log("error.value.message", error.value.data);
+    const cleanMessage = (error.value.data as string).trim();
+    if (cleanMessage === "email is already in use") {
+      uniqueEmail.value = true;
+    } else if (cleanMessage === "username is already in use") {
+      uniqueUsername.value = true;
+    }
+  } else {
+    toast({
+      title: "Registration successful!",
+      description: "You have successfully registered.",
+    });
+    ///navigateTo("/");
   }
-  toast({
-    title: "Registration successful!",
-    description: "You have successfully registered.",
-  });
-  navigateTo("/");
 };
 </script>
