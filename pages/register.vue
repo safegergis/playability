@@ -105,27 +105,37 @@ const schema = yup.object({
 });
 
 // Handle form submission
-const onSubmit = (
-  values: {
-    username: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-  },
-  { resetForm }: { resetForm: () => void }
-) => {
-  console.log("Form Submitted:", values);
-  // Reset form values after submission
-  resetForm();
+const onSubmit = async (values: {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}) => {
+  const registrationData = {
+    username: values.username,
+    email: values.email,
+    password: values.password,
+  };
 
+  // Reset form values after submission
+
+  const { data, error } = await useAsyncData("register", () =>
+    $fetch("http://localhost:8080/user/register", {
+      method: "POST",
+      body: registrationData,
+    })
+  );
+  if (error.value) {
+    console.error("Registration error:", error.value);
+    toast({
+      title: "Registration failed!",
+      description: "Please try again.",
+    });
+  }
   toast({
     title: "Registration successful!",
     description: "You have successfully registered.",
   });
-  // Optionally, you can show a success message or redirect the user
-  // For example:
-  // useRouter().push('/login');
-  // or
-  // alert('Registration successful!');
+  navigateTo("/");
 };
 </script>

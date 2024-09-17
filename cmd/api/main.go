@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
 	"playability/auth"
@@ -37,17 +38,17 @@ func (server *Server) MountMiddleware() {
 func (server *Server) MountHandlers() {
 	server.Router.Get("/search", server.searchHandler)
 	server.Router.Get("/games", server.gamesHandler)
-	/*
-		server.Router.Route("/auth", func(r chi.Router) {
-			r.Post("/login", server.LoginUser)
-			r.Post("/register", server.CreateUser)
 
-			r.Group(func(r chi.Router) {
-				r.Use(jwtauth.Verifier(server.Authtoken))
-				r.Post("/report", server.CreateReport)
-			})
-		})
-	*/
+	server.Router.Route("/user", func(r chi.Router) {
+		//r.Post("/login", server.LoginUser)
+		r.Post("/register", server.CreateUser)
+
+		//r.Group(func(r chi.Router) {
+		//r.Use(jwtauth.Verifier(server.Authtoken))
+		//r.Post("/report", server.CreateReport)
+		//})
+	})
+
 }
 func main() {
 
@@ -102,4 +103,31 @@ func (server *Server) gamesHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("game details:", string(body))
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
+}
+func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
+	var user auth.UserRegister
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	hash, err := auth.GetHash(user.Password)
+	if err != nil {
+		log.Println("Error:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	query := `INSERT INTO users (username, email, hash, num_reports) VALUES ($1, $2, $3, $4)`
+	result, err := server.DB.Exec(query, user.Username, user.Email, hash, 0)
+	if err != nil {
+		log.Println("Error:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	recordId, _ := result.LastInsertId()
+	response := auth.Response{
+		ID: int(recordId),
+	}
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
 }
