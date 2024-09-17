@@ -1,25 +1,23 @@
-package data
+package db
 
 import (
 	"database/sql"
 	"errors"
 	"log"
 	"playability/auth"
+	"playability/types"
 
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 )
 
-
-
-func InsertUser(db *sql.DB, user auth.UserRegister)  error {
-	if db == nil {
-        return errors.New("database connection is nil")
-    }
+func (m DatabaseModel) InsertUser(user types.UserRegister) error {
+	if m.DB == nil {
+		return errors.New("database connection is nil")
+	}
 	var existingID int
 	checkQuery := `SELECT id FROM users WHERE email = $1 OR username = $2`
-	err := db.QueryRow(checkQuery, user.Email, user.Username).Scan(&existingID)
-	log.Println("existingID:", existingID)
+	err := m.DB.QueryRow(checkQuery, user.Email, user.Username).Scan(&existingID)
+
 	if err != sql.ErrNoRows {
 		if err != nil {
 			log.Println("Error checking email/username:", err)
@@ -28,7 +26,7 @@ func InsertUser(db *sql.DB, user auth.UserRegister)  error {
 		// If we found a matching record, determine which field caused the conflict
 		if existingID != 0 {
 			checkEmailQuery := `SELECT id FROM users WHERE email = $1`
-			err := db.QueryRow(checkEmailQuery, user.Email).Scan(&existingID)
+			err := m.DB.QueryRow(checkEmailQuery, user.Email).Scan(&existingID)
 			if err == nil {
 				log.Println("email error")
 				return errors.New("email is already in use")
@@ -39,7 +37,7 @@ func InsertUser(db *sql.DB, user auth.UserRegister)  error {
 
 		}
 	}
-	
+
 	// Proceed to create the user since both email and username are unique
 
 	hash, err := auth.GetHash(user.Password)
@@ -47,9 +45,8 @@ func InsertUser(db *sql.DB, user auth.UserRegister)  error {
 		log.Println("Error hashing password:", err)
 		return errors.New("internal server error")
 	}
-	
 	insertQuery := `INSERT INTO users (username, email, hash, num_reports) VALUES ($1, $2, $3, $4)`
-	_, err = db.Exec(insertQuery, user.Username, user.Email, hash, 0)
+	_, err = m.DB.Exec(insertQuery, user.Username, user.Email, hash, 0)
 	if err != nil {
 		// Check if the error is due to a unique constraint violation
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" { // unique_violation

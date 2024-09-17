@@ -1,4 +1,4 @@
-package data
+package fetch
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"playability/types"
 
 	"github.com/joho/godotenv"
 )
@@ -47,7 +48,7 @@ func GetGame(gameID string) ([]byte, error) {
 	}
 
 	// Parse game data
-	var games []Game
+	var games []types.Game
 	err = json.Unmarshal(body, &games)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling IGDB games response: %w", err)
@@ -64,7 +65,7 @@ func GetGame(gameID string) ([]byte, error) {
 		log.Fatal("Error making IGDB external games request:", err)
 	}
 
-	var externalGames []ExternalGame
+	var externalGames []types.ExternalGame
 	err = json.Unmarshal(body, &externalGames)
 	if err != nil {
 		log.Fatal("Error unmarshalling IGDB external games response:", err)
@@ -87,7 +88,7 @@ func GetGame(gameID string) ([]byte, error) {
 		log.Fatal("Error making IGDB covers request:", err)
 	}
 
-	var coverArt []CoverArt
+	var coverArt []types.CoverArt
 	err = json.Unmarshal(body, &coverArt)
 	if err != nil {
 		log.Fatal("Error unmarshalling IGDB covers response:", err)
@@ -109,7 +110,7 @@ func GetGame(gameID string) ([]byte, error) {
 		if err != nil {
 			log.Fatal("Error reading PC Gaming Wiki closed captions:", err)
 		}
-		var response PCGamingWikiResponse
+		var response types.PCGamingWikiResponse
 		err = json.Unmarshal(body, &response)
 		if err != nil {
 			log.Fatal("Error unmarshalling PC Gaming Wiki closed captions:", err)
@@ -133,7 +134,7 @@ func GetGame(gameID string) ([]byte, error) {
 			log.Fatal("Error reading PC Gaming Wiki color blind mode:", err)
 		}
 
-		var response2 PCGamingWikiResponse
+		var response2 types.PCGamingWikiResponse
 		err = json.Unmarshal(body, &response2)
 		if err != nil {
 			log.Fatal("Error unmarshalling PC Gaming Wiki color blind mode:", err)
@@ -156,7 +157,7 @@ func GetGame(gameID string) ([]byte, error) {
 		if err != nil {
 			log.Fatal("Error reading PC Gaming Wiki controller support and remapping:", err)
 		}
-		var response3 PCGamingWikiResponse
+		var response3 types.PCGamingWikiResponse
 		err = json.Unmarshal(body, &response3)
 		if err != nil {
 			log.Fatal("Error unmarshalling PC Gaming Wiki controller support and remapping:", err)

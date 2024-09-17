@@ -1,38 +1,20 @@
-package data
+package db
 
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
+
+	"playability/types"
 
 	_ "github.com/lib/pq"
 )
 
-// Database connection constants
-const (
-	host     = "localhost"
-	port     = "5432"
-	user     = "safegergis"
-	password = "root"
-	dbname   = "playability"
-)
-
-// InitDB initializes the database connection
-func InitDB() *sql.DB {
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		log.Fatal("Error opening database:", err)
-	}
-	return db
-}
-
 // insertGame inserts a new game into the database
-func InsertGame(db *sql.DB, body []byte) {
+func (m DatabaseModel) InsertGame(body []byte) {
 
 	// Unmarshal JSON body into Game struct
-	var game Game
+	var game types.Game
 	err := json.Unmarshal(body, &game)
 	if err != nil {
 		log.Fatal("Error unmarshalling game:", err)
@@ -61,23 +43,23 @@ func InsertGame(db *sql.DB, body []byte) {
 	}
 
 	// Execute SQL statement
-	_, err = db.Exec(sqlStatement, id, name, summary, cover_art, platforms, closed_captions, color_blind, full_controller_support, controller_remapping)
+	_, err = m.DB.Exec(sqlStatement, id, name, summary, cover_art, platforms, closed_captions, color_blind, full_controller_support, controller_remapping)
 	if err != nil {
 		log.Fatal("Error inserting game:", err)
 	}
 }
 
 // queryGame retrieves a game from the database by its ID
-func QueryGame(db *sql.DB, id string) ([]byte, error, bool) {
+func (m DatabaseModel) QueryGame(id string) ([]byte, error, bool) {
 
 	// Prepare SQL statement for querying game
 	sqlStatement := `
 	SELECT * FROM games WHERE id = $1`
 
-	var game Game
+	var game types.Game
 	var platforms string
 	// Query the database
-	row := db.QueryRow(sqlStatement, id)
+	row := m.DB.QueryRow(sqlStatement, id)
 	err := row.Scan(&game.ID, &game.Name, &game.Summary, &game.CoverArt, &platforms, &game.ClosedCaptions, &game.ColorBlind, &game.FullControllerSupport, &game.ControllerRemapping)
 
 	if err == sql.ErrNoRows {

@@ -1,6 +1,5 @@
-package data
+package types
 
-// Game represents the structure of a game from the IGDB API
 type Game struct {
 	ID                    int    `json:"id"`
 	Name                  string `json:"name"`
@@ -38,4 +37,22 @@ type PCGamingWikiResponse struct {
 			ControllerRemapping   string `json:"Controller remapping,omitempty"`
 		} `json:"title"`
 	} `json:"cargoquery"`
+}
+type UserLogin struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UserRegister struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UserRow struct {
+	ID           int    `json:"id"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	Hash         string `json:"hash"`
+	NumOfReports int    `json:"num_of_reports"`
 }
