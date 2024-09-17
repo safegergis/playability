@@ -1,4 +1,4 @@
-package main
+package data
 
 import (
 	"bytes"
@@ -12,47 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Game represents the structure of a game from the IGDB API
-type Game struct {
-	ID                    int    `json:"id"`
-	Name                  string `json:"name"`
-	Cover                 int    `json:"cover"`
-	Summary               string `json:"summary"`
-	Platforms             []int  `json:"platforms"`
-	InvolvedCompanies     []int  `json:"involved_companies"`
-	ExternalGames         []int  `json:"external_games"`
-	CoverArt              string `json:"cover_art"`
-	ClosedCaptions        string `json:"closed_captions"`
-	ColorBlind            string `json:"color_blind"`
-	FullControllerSupport string `json:"full_controller_support"`
-	ControllerRemapping   string `json:"controller_remapping"`
-	SteamAvailability     bool   `json:"steam_availability"`
-}
-
-// CoverArt represents the structure of cover art data from the IGDB API
-type CoverArt struct {
-	ID      int    `json:"id"`
-	ImageID string `json:"image_id"`
-}
-
-type ExternalGame struct {
-	ID  int    `json:"id"`
-	UID string `json:"uid"`
-}
-
-// PCGamingWikiResponse represents the structure of responses from PCGamingWiki API
-type PCGamingWikiResponse struct {
-	CargoQuery []struct {
-		Title struct {
-			ClosedCaptions        string `json:"Closed captions,omitempty"`
-			ColorBlind            string `json:"Color blind,omitempty"`
-			FullControllerSupport string `json:"Full controller support,omitempty"`
-			ControllerRemapping   string `json:"Controller remapping,omitempty"`
-		} `json:"title"`
-	} `json:"cargoquery"`
-}
-
-func getSearch(searchTerm string) ([]byte, error) {
+func GetSearch(searchTerm string) ([]byte, error) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -71,7 +31,7 @@ func getSearch(searchTerm string) ([]byte, error) {
 }
 
 // getGame retrieves detailed information about a specific game
-func getGame(gameID string) ([]byte, error) {
+func GetGame(gameID string) ([]byte, error) {
 	// Load environment variables
 	err := godotenv.Load()
 	if err != nil {
@@ -136,7 +96,7 @@ func getGame(gameID string) ([]byte, error) {
 	// Fetch accessibility information from PCGamingWiki
 	// Closed captions
 
-	closedCaptions := "unknown"	
+	closedCaptions := "unknown"
 	colorBlind := "unknown"
 	fullControllerSupport := "unknown"
 	controllerRemapping := "unknown"
