@@ -6,6 +6,8 @@ import (
 	"log"
 	"playability/auth"
 	"playability/types"
+	"strconv"
+	"strings"
 
 	"github.com/lib/pq"
 )
@@ -64,3 +66,30 @@ func (m DatabaseModel) InsertUser(user types.UserRegister) error {
 
 	return nil
 }
+func (m DatabaseModel) CheckUser(email string, password string) (string, bool, error) {
+	if m.DB == nil {
+		return "", false, errors.New("database connection is nil")
+	}
+	var hash string
+	email = strings.ToLower(email)
+	hashQuery := `SELECT hash FROM users WHERE email = $1`
+	err := m.DB.QueryRow(hashQuery, email).Scan(&hash)
+	if err != nil {
+		return "", false, nil
+	}
+	err = auth.CheckPassword(password, hash)
+	if err != nil {	
+		return "", false, nil
+	}
+
+	idQuery := `SELECT id FROM users WHERE email = $1`
+	var id int
+	err = m.DB.QueryRow(idQuery, email).Scan(&id)
+	if err != nil {
+		log.Println("Error checking user:", err)
+		return "", false, err
+	}
+	return strconv.Itoa(id), true, nil
+}
+
+	

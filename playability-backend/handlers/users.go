@@ -2,13 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
+	"playability/auth"
 	"playability/types"
 )
 
-func (env *Env) PostUser(w http.ResponseWriter, r *http.Request) {
+func (env *Env) PostCreateUser(w http.ResponseWriter, r *http.Request) {
 	var user types.UserRegister
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -34,4 +36,35 @@ func (env *Env) PostUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (env *Env) PostLoginUser(w http.ResponseWriter, r *http.Request) {
+	var user types.UserLogin
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	id, valid, err := env.DB.CheckUser(user.Email, user.Password)
+	if err != nil {
+		log.Println("Error checking user:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !valid {
+		log.Println("Invalid email or password")
+		http.Error(w, "invalid email or password", http.StatusUnauthorized)
+		return
+	}
+	token, err := auth.CreateToken(id)
+	if err != nil {
+		log.Println("Error creating token:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Println("Token:", token)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(token))
+
 }
