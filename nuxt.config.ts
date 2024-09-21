@@ -9,6 +9,7 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@nuxt/image",
     "@vee-validate/nuxt",
+    "@nuxtjs/color-mode",
   ],
   runtimeConfig: {
     igdbClientSecret: process.env.IGDB_CLIENT_SECRET,

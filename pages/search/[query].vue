@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col items-center justify-center min-h-screen p-4">
-    <h1 class="text-3xl font-bold text-white mb-6">
+    <h1 class="text-3xl font-bold text-foreground mb-6">
       Search Results for "{{ searchQuery }}"
     </h1>
     <div
@@ -14,9 +14,11 @@
           @click="onSearchResultClick(result.id)"
         >
           <Card
-            class="bg-stone-800 rounded-lg p-4 shadow-md transition ease-in-out delay-150 hover:scale-105"
+            class="bg-zinc-800 rounded-lg p-4 shadow-md transition ease-in-out delay-150 hover:scale-105"
           >
-            <h2 class="text-xl font-semibold text-white">{{ result.name }}</h2>
+            <h2 class="text-xl font-semibold text-foreground">
+              {{ result.name }}
+            </h2>
           </Card>
         </li>
       </ul>
@@ -27,7 +29,9 @@
     >
       No results found for "{{ searchQuery }}"
     </div>
-    <div v-if="status === 'pending'" class="text-white text-xl">Loading...</div>
+    <div v-if="status === 'pending'" class="text-foreground text-xl">
+      Loading...
+    </div>
   </div>
 </template>
 

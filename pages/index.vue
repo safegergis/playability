@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col items-center justify-center min-h-screen">
-    <h1 class="text-4xl font-bold text-white mb-4">Playability</h1>
+    <h1 class="text-4xl font-bold text-foreground mb-4">Playability</h1>
     <div class="flex items-center">
       <Input
         v-model="searchQuery"

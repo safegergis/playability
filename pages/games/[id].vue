@@ -1,87 +1,104 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center">
-    <div class="container mx-auto p-8">
-      <div v-if="game" class="flex flex-col md:flex-row gap-8">
-        <div class="md:w-1/3 justify-center">
-          <NuxtImg
-            :src="game.cover_art"
-            :alt="game.name + ' cover'"
-            width="300"
-            height="400"
-            class="rounded-lg shadow-lg"
-          />
-        </div>
-        <div class="md:w-2/3">
-          <h1 class="text-3xl font-bold text-white mb-2">{{ game.name }}</h1>
-          <div v-if="game.platforms" class="text-white mb-4">
-            <h2 class="text-xl font-semibold mb-2">Platforms:</h2>
-            <ul class="flex flex-wrap gap-2">
-              <li
-                v-for="platform in platforms"
-                :key="platform.id"
-                class="bg-gray-700 px-2 py-1 rounded-md"
-              >
-                <Icon
-                  :name="
-                    game.platforms.includes(platform.id) ? platform.icon : ''
-                  "
-                  size="24"
-                />
-              </li>
-            </ul>
+  <div class="flex flex-col items-center">
+    <div class="flex items-center justify-center">
+      <div class="container mx-auto p-8">
+        <div v-if="game" class="flex flex-col md:flex-row gap-8">
+          <div class="md:w-1/3 justify-center">
+            <NuxtImg
+              :src="game.cover_art"
+              :alt="game.name + ' cover'"
+              width="300"
+              height="400"
+              class="rounded-lg shadow-lg"
+            />
           </div>
-          <p v-if="game.summary" class="text-white text-lg mb-8">
-            {{ game.summary }}
-          </p>
-
-          <Card v-if="game" class="bg-gray-800 p-4 rounded-lg:">
-            <h2 class="text-xl font-semibold text-white mb-4">
-              Accessibility Features
-            </h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div class="bg-gray-700 p-4 rounded-lg">
-                <h3 class="text-lg font-medium text-white mb-2">
-                  Colorblind Modes
-                </h3>
-                <p class="text-gray-300">
-                  {{ parseAccessibility(game.color_blind || "unknown") }}
-                </p>
-              </div>
-              <div class="bg-gray-700 p-4 rounded-lg">
-                <h3 class="text-lg font-medium text-white mb-2">
-                  Closed Captions
-                </h3>
-                <p class="text-gray-300">
-                  {{ parseAccessibility(game.closed_captions || "unknown") }}
-                </p>
-              </div>
-              <div class="bg-gray-700 p-4 rounded-lg">
-                <h3 class="text-lg font-medium text-white mb-2">
-                  Controller Support
-                </h3>
-                <p class="text-gray-300">
-                  {{
-                    parseAccessibility(
-                      game.full_controller_support || "unknown"
-                    )
-                  }}
-                </p>
-              </div>
-              <div class="bg-gray-700 p-4 rounded-lg">
-                <h3 class="text-lg font-medium text-white mb-2">
-                  Controller Remapping
-                </h3>
-                <p class="text-gray-300">
-                  {{
-                    parseAccessibility(game.controller_remapping || "unknown")
-                  }}
-                </p>
-              </div>
+          <div class="md:w-2/3">
+            <h1 class="text-3xl font-bold text-foreground mb-2">
+              {{ game.name }}
+            </h1>
+            <div v-if="game.platforms" class="text-foreground mb-4">
+              <h2 class="text-xl font-semibold mb-2">Platforms:</h2>
+              <ul class="flex flex-wrap gap-2">
+                <li
+                  v-for="platform in platforms"
+                  :key="platform.id"
+                  class="bg-zinc-700 px-2 py-1 rounded-md"
+                >
+                  <Icon
+                    :name="
+                      game.platforms.includes(platform.id) ? platform.icon : ''
+                    "
+                    size="24"
+                  />
+                </li>
+              </ul>
             </div>
-          </Card>
+            <p v-if="game.summary" class="text-foreground text-lg mb-8">
+              {{ game.summary }}
+            </p>
+
+            <Card v-if="game" class="bg-primary p-4 rounded-lg:">
+              <h2 class="text-xl font-semibold text-foreground mb-4">
+                Essential Accessibility Features
+              </h2>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-zinc-700 p-4 rounded-lg">
+                  <h3 class="text-lg font-medium text-foreground mb-2">
+                    Colorblind Mode
+                  </h3>
+                  <p class="text-gray-300">
+                    {{ parseAccessibility(game.color_blind || "unknown") }}
+                  </p>
+                </div>
+                <div class="bg-zinc-700 p-4 rounded-lg">
+                  <h3 class="text-lg font-medium text-foreground mb-2">
+                    Closed Captions
+                  </h3>
+                  <p class="text-gray-300">
+                    {{ parseAccessibility(game.closed_captions || "unknown") }}
+                  </p>
+                </div>
+                <div class="bg-zinc-700 p-4 rounded-lg">
+                  <h3 class="text-lg font-medium text-foreground mb-2">
+                    Controller Support
+                  </h3>
+                  <p class="text-gray-300">
+                    {{
+                      parseAccessibility(
+                        game.full_controller_support || "unknown"
+                      )
+                    }}
+                  </p>
+                </div>
+                <div class="bg-zinc-700 p-4 rounded-lg">
+                  <h3 class="text-lg font-medium text-foreground mb-2">
+                    Full Controller Remapping
+                  </h3>
+                  <p class="text-gray-300">
+                    {{
+                      parseAccessibility(game.controller_remapping || "unknown")
+                    }}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
+        <p v-else class="text-foreground text-xl text-center">Loading...</p>
       </div>
-      <p v-else class="text-white text-xl text-center">Loading...</p>
+    </div>
+    <div class="container mx-auto p-8">
+      <h2 class="text-3xl font-semibold text-foreground mb-4">
+        Accessibility Reports
+      </h2>
+      <hr class="w-full mb-4" />
+      <ReportButton class="mb-4" />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ReportCard />
+        <ReportCard />
+        <ReportCard />
+        <ReportCard />
+      </div>
     </div>
   </div>
 </template>
