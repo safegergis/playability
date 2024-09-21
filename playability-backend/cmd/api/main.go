@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"playability/auth"
 	"playability/db"
@@ -37,20 +36,13 @@ func (env *Env) MountHandlers() {
 		r.Post("/login", env.handlers.PostLoginUser)
 		r.Post("/register", env.handlers.PostCreateUser)
 
+		// r.Get("/reports", env.handlers.GetReportsHandler)
+		// r.Get("/reports/{id}", env.handlers.GetReportHandler)
 		r.Group(func(r chi.Router) {
 			r.Use(jwtauth.Verifier(env.authtoken))
 			r.Use(jwtauth.Authenticator(env.authtoken))
 
-
-			r.Get("/report", func(w http.ResponseWriter, r *http.Request) {
-				_, claims, err := jwtauth.FromContext(r.Context())
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				userID := claims["sub"].(string)
-				fmt.Fprintf(w, "Authenticated user ID: %v", userID)
-			})
+			r.Post("/report", env.handlers.PostReportHandler)
 		})
 	})
 

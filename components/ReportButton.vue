@@ -30,11 +30,12 @@
                   <SelectValue placeholder="Select option" />
                 </SelectTrigger>
                 <SelectContent class="dark">
+                  <SelectItem value="false">There is no support</SelectItem>
                   <SelectItem value="unknown">I don't know</SelectItem>
                   <SelectItem value="limited"
                     >There is limited support</SelectItem
                   >
-                  <SelectItem value="full">There is full support</SelectItem>
+                  <SelectItem value="true">There is full support</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -51,11 +52,12 @@
                   <SelectValue placeholder="Select option" />
                 </SelectTrigger>
                 <SelectContent class="dark">
+                  <SelectItem value="false">There is no support</SelectItem>
                   <SelectItem value="unknown">I don't know</SelectItem>
                   <SelectItem value="limited"
                     >There is limited support</SelectItem
                   >
-                  <SelectItem value="full">There is full support</SelectItem>
+                  <SelectItem value="true">There is full support</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -72,11 +74,12 @@
                   <SelectValue placeholder="Select option" />
                 </SelectTrigger>
                 <SelectContent class="dark">
+                  <SelectItem value="false">There is no support</SelectItem>
                   <SelectItem value="unknown">I don't know</SelectItem>
                   <SelectItem value="limited"
                     >There is limited support</SelectItem
                   >
-                  <SelectItem value="full">There is full support</SelectItem>
+                  <SelectItem value="true">There is full support</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -93,11 +96,12 @@
                   <SelectValue placeholder="Select option" />
                 </SelectTrigger>
                 <SelectContent class="dark">
+                  <SelectItem value="false">There is no support</SelectItem>
                   <SelectItem value="unknown">I don't know</SelectItem>
                   <SelectItem value="limited"
                     >There is limited support</SelectItem
                   >
-                  <SelectItem value="full">There is full support</SelectItem>
+                  <SelectItem value="true">There is full support</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -132,7 +136,7 @@
 </template>
 
 <script lang="ts" setup>
-defineProps<{
+const props = defineProps<{
   gameId: number;
 }>();
 
@@ -144,10 +148,26 @@ const formData = ref({
   score: 0,
   report: "",
 });
+const ReportRow = computed(() => {
+  return {
+    game_id: props.gameId,
+    closed_captions: formData.value.closedCaptions,
+    color_blind: formData.value.colorBlind,
+    full_controller_support: formData.value.controllerRemapping,
+    controller_remapping: formData.value.controllerSupport,
+    score: formData.value.score,
+    report: formData.value.report,
+  };
+});
 
-const onSubmit = () => {
-  // Handle form submission here
+const jwt = useCookie("jwt");
+console.log(jwt.value);
+const onSubmit = async () => {
   console.log(formData.value);
+  await useFetch("/api/report/report", {
+    method: "POST",
+    body: ReportRow.value,
+  });
 };
 </script>
 
