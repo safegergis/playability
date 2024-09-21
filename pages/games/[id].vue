@@ -13,10 +13,10 @@
             />
           </div>
           <div class="md:w-2/3">
-            <h1 class="text-3xl font-bold text-foreground mb-2">
+            <h1 class="text-3xl font-bold mb-2">
               {{ game.name }}
             </h1>
-            <div v-if="game.platforms" class="text-foreground mb-4">
+            <div v-if="game.platforms" class="mb-4">
               <h2 class="text-xl font-semibold mb-2">Platforms:</h2>
               <ul class="flex flex-wrap gap-2">
                 <li
@@ -33,35 +33,29 @@
                 </li>
               </ul>
             </div>
-            <p v-if="game.summary" class="text-foreground text-lg mb-8">
+            <p v-if="game.summary" class="text-lg mb-8">
               {{ game.summary }}
             </p>
 
-            <Card v-if="game" class="bg-primary p-4 rounded-lg:">
-              <h2 class="text-xl font-semibold text-foreground mb-4">
+            <Card v-if="game" class="dark p-4 rounded-lg:">
+              <h2 class="text-xl font-semibold mb-4">
                 Essential Accessibility Features
               </h2>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-zinc-700 p-4 rounded-lg">
-                  <h3 class="text-lg font-medium text-foreground mb-2">
-                    Colorblind Mode
-                  </h3>
+                  <h3 class="text-lg font-medium mb-2">Colorblind Mode</h3>
                   <p class="text-gray-300">
                     {{ parseAccessibility(game.color_blind || "unknown") }}
                   </p>
                 </div>
                 <div class="bg-zinc-700 p-4 rounded-lg">
-                  <h3 class="text-lg font-medium text-foreground mb-2">
-                    Closed Captions
-                  </h3>
+                  <h3 class="text-lg font-medium mb-2">Closed Captions</h3>
                   <p class="text-gray-300">
                     {{ parseAccessibility(game.closed_captions || "unknown") }}
                   </p>
                 </div>
                 <div class="bg-zinc-700 p-4 rounded-lg">
-                  <h3 class="text-lg font-medium text-foreground mb-2">
-                    Controller Support
-                  </h3>
+                  <h3 class="text-lg font-medium mb-2">Controller Support</h3>
                   <p class="text-gray-300">
                     {{
                       parseAccessibility(
@@ -71,7 +65,7 @@
                   </p>
                 </div>
                 <div class="bg-zinc-700 p-4 rounded-lg">
-                  <h3 class="text-lg font-medium text-foreground mb-2">
+                  <h3 class="text-lg font-medium mb-2">
                     Full Controller Remapping
                   </h3>
                   <p class="text-gray-300">
@@ -84,13 +78,11 @@
             </Card>
           </div>
         </div>
-        <p v-else class="text-foreground text-xl text-center">Loading...</p>
+        <p v-else class="text-xl text-center">Loading...</p>
       </div>
     </div>
     <div class="container mx-auto p-8">
-      <h2 class="text-3xl font-semibold text-foreground mb-4">
-        Accessibility Reports
-      </h2>
+      <h2 class="text-3xl font-semibold mb-4">Accessibility Reports</h2>
       <hr class="w-full mb-4" />
       <ReportButton class="mb-4" />
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

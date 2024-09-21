@@ -1,12 +1,14 @@
 <template>
   <div>
-    <Dialog class="">
+    <Dialog>
       <DialogTrigger as-child>
-        <Button variant="outline" class="bg-primary text-foreground">
+        <Button variant="outline" class="dark">
           Submit Accessibility Report
         </Button>
       </DialogTrigger>
-      <DialogContent class="sm:max-w-[625px]">
+      <DialogContent
+        class="bg-primary text-primary-foreground border-primary sm:max-w-[625px]"
+      >
         <DialogHeader class="">
           <DialogTitle>Submit Accessibility Report</DialogTitle>
           <DialogDescription>
@@ -24,10 +26,10 @@
                 v-model="formData.colorBlind"
                 class="col-span-3"
               >
-                <SelectTrigger>
+                <SelectTrigger class="dark">
                   <SelectValue placeholder="Select option" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent class="dark">
                   <SelectItem value="unknown">I don't know</SelectItem>
                   <SelectItem value="limited"
                     >There is limited support</SelectItem
@@ -45,10 +47,10 @@
                 v-model="formData.closedCaptions"
                 class="col-span-3"
               >
-                <SelectTrigger>
+                <SelectTrigger class="dark">
                   <SelectValue placeholder="Select option" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent class="dark">
                   <SelectItem value="unknown">I don't know</SelectItem>
                   <SelectItem value="limited"
                     >There is limited support</SelectItem
@@ -66,10 +68,10 @@
                 v-model="formData.controllerSupport"
                 class="col-span-3"
               >
-                <SelectTrigger>
+                <SelectTrigger class="dark">
                   <SelectValue placeholder="Select option" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent class="dark">
                   <SelectItem value="unknown">I don't know</SelectItem>
                   <SelectItem value="limited"
                     >There is limited support</SelectItem
@@ -87,10 +89,10 @@
                 v-model="formData.controllerRemapping"
                 class="col-span-3"
               >
-                <SelectTrigger>
+                <SelectTrigger class="dark">
                   <SelectValue placeholder="Select option" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent class="dark">
                   <SelectItem value="unknown">I don't know</SelectItem>
                   <SelectItem value="limited"
                     >There is limited support</SelectItem
@@ -100,14 +102,14 @@
               </Select>
             </div>
             <div class="grid grid-cols-4 items-center gap-4">
-              <Label for="score" class="text-right">Score (out of 10)</Label>
+              <Label for="score" class="text-right"> Score (out of 10) </Label>
               <Input
                 id="score"
                 v-model="formData.score"
                 type="number"
                 min="0"
                 max="10"
-                class="col-span-3"
+                class="col-span-3 dark"
               />
             </div>
             <div class="grid grid-cols-4 items-center gap-4">
@@ -116,7 +118,7 @@
                 id="report"
                 v-model="formData.report"
                 placeholder="Optional report for others"
-                class="col-span-3"
+                class="col-span-3 dark"
               />
             </div>
           </div>

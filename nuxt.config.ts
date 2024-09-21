@@ -9,8 +9,12 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@nuxt/image",
     "@vee-validate/nuxt",
-    "@nuxtjs/color-mode",
   ],
+
+  tailwindcss: {
+    cssPath: "~/assets/css/tailwind.css",
+    configPath: "~/tailwind.config.js",
+  },
   runtimeConfig: {
     igdbClientSecret: process.env.IGDB_CLIENT_SECRET,
   },

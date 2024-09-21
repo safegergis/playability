@@ -1,5 +1,5 @@
 <template>
-  <Card class="w-full flex bg-primary text-foreground">
+  <Card class="dark w-full flex">
     <div
       class="flex-shrink-0 w-24 bg-zinc-600 flex flex-col items-center justify-center p-2 rounded-l-lg"
     >
