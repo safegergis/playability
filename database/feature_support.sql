@@ -1,0 +1,1 @@
+CREATE TYPE feature_support AS ENUM ('false', 'unknown', 'limited', 'true');
