@@ -17,7 +17,7 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println("ReportBody: ", reportBody)
-	
+
 	_, claims, err := jwtauth.FromContext(r.Context())
 	if err != nil {
 		fmt.Println("Error getting claims: ", err)
@@ -25,27 +25,40 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userID := claims["sub"].(string)
-	
+
 	report := types.ReportRow{
-		GameID: reportBody.GameID,
-		UserID: userID,
-		ClosedCaptions: reportBody.ClosedCaptions,
-		ColorBlind: reportBody.ColorBlind,
+		GameID:                reportBody.GameID,
+		UserID:                userID,
+		ClosedCaptions:        reportBody.ClosedCaptions,
+		ColorBlind:            reportBody.ColorBlind,
 		FullControllerSupport: reportBody.FullControllerSupport,
-		ControllerRemapping: reportBody.ControllerRemapping,
-		Report: reportBody.Report,
-		Score: reportBody.Score,
+		ControllerRemapping:   reportBody.ControllerRemapping,
+		Report:                reportBody.Report,
+		Score:                 reportBody.Score,
 	}
 
 	err = env.DB.InsertReport(&report)
 	if err != nil {
-		fmt.Println("Error inserting report: ", err)
+		if err.Error() == "report already exists" {
+			http.Error(w, "report already exists", http.StatusConflict)
+			return
+		} else {
+			fmt.Println("Error inserting report: ", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+
+	w.WriteHeader(http.StatusCreated)
+
+}
+
+func (env *Env) GetReportsHandler(w http.ResponseWriter, r *http.Request) {
+	reports, err := env.DB.GetReports()
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
-	w.WriteHeader(http.StatusCreated)
-	
-	
-	
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(reports)
 }

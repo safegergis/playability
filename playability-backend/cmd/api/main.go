@@ -14,8 +14,8 @@ import (
 )
 
 type Env struct {
-	handlers *handlers.Env
-	router   *chi.Mux
+	handlers  *handlers.Env
+	router    *chi.Mux
 	authtoken *jwtauth.JWTAuth
 }
 
@@ -36,7 +36,7 @@ func (env *Env) MountHandlers() {
 		r.Post("/login", env.handlers.PostLoginUser)
 		r.Post("/register", env.handlers.PostCreateUser)
 
-		// r.Get("/reports", env.handlers.GetReportsHandler)
+		r.Get("/reports", env.handlers.GetReportsHandler)
 		// r.Get("/reports/{id}", env.handlers.GetReportHandler)
 		r.Group(func(r chi.Router) {
 			r.Use(jwtauth.Verifier(env.authtoken))
