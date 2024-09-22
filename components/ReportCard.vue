@@ -4,39 +4,45 @@
       class="flex-shrink-0 w-24 bg-zinc-600 flex flex-col items-center justify-center p-2 rounded-l-lg"
     >
       <span class="text-sm font-semibold text-center">Accessibility Score</span>
-      <span class="text-2xl font-bold">{{ data?.score }}/10</span>
+      <span class="text-2xl font-bold">{{ report?.score }}/10</span>
     </div>
     <div class="flex-grow">
       <CardHeader>
-        <CardTitle>{{ data?.username }}</CardTitle>
+        <CardTitle>{{ report?.username }}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p>{{ data?.text }}</p>
+        <p>{{ report?.report }}</p>
       </CardContent>
     </div>
   </Card>
 </template>
 
 <script lang="ts" setup>
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-
+interface Report {
+  id: string;
+  game_id: string;
+  user_id: string;
+  score: number;
+  report: string;
+  username?: string;
+}
 const props = defineProps<{
-  reviewId: string;
+  report: Report;
 }>();
-
-/* const { data, error } = useFetch(
-  `http://localhost:3000/api/reviews/${props.reviewId}`,
+const { data, error } = await useFetch<string>(
+  `http://localhost:8080/user/${props.report.user_id}`,
   {
-    key: props.reviewId,
+    method: "GET",
   }
-  
 );
-*/
-const data = {
-  score: 8,
-  username: "John Doe",
-  text: "This is a test review",
-};
+if (error) {
+  console.error(error);
+}
+if (data.value) {
+  console.log("Data: ", data.value);
+  const user = JSON.parse(data.value);
+  props.report.username = user.username;
+}
 </script>
 
 <style scoped>

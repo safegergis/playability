@@ -32,7 +32,33 @@ func (m *DatabaseModel) InsertReport(report *types.ReportRow) error {
 	return err
 }
 
-func (m *DatabaseModel) GetReports() ([]types.ReportRow, error) {
+func (m *DatabaseModel) QueryReportCards(id string) ([]types.ReportCards, error) {
+	if m.DB == nil {
+		return nil, errors.New("database connection is nil")
+	}
+	query := `SELECT id, game_id, user_id, score, report FROM reports WHERE game_id = $1`
+	rows, err := m.DB.Query(query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var reports []types.ReportCards
+	for rows.Next() {
+		var report types.ReportCards
+		err := rows.Scan(&report.ID, &report.GameID, &report.UserID, &report.Score, &report.Report)
+		if err != nil {
+			return nil, err
+		}
+		reports = append(reports, report)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return reports, nil
+}
+
+func (m *DatabaseModel) QueryAccessibilityReports() ([]types.AccessibilityReport, error) {
 	if m.DB == nil {
 		return nil, errors.New("database connection is nil")
 	}
@@ -43,10 +69,10 @@ func (m *DatabaseModel) GetReports() ([]types.ReportRow, error) {
 	}
 	defer rows.Close()
 
-	var reports []types.ReportRow
+	var reports []types.AccessibilityReport
 	for rows.Next() {
-		var report types.ReportRow
-		err := rows.Scan(&report.ID, &report.GameID, &report.UserID, &report.ClosedCaptions, &report.ColorBlind, &report.FullControllerSupport, &report.ControllerRemapping, &report.Score, &report.Report)
+		var report types.AccessibilityReport
+		err := rows.Scan(&report.ID, &report.GameID, &report.ClosedCaptions, &report.ColorBlind, &report.FullControllerSupport, &report.ControllerRemapping)
 		if err != nil {
 			return nil, err
 		}

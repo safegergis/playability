@@ -56,7 +56,7 @@ type UserRow struct {
 	Hash         string `json:"hash"`
 	NumOfReports int    `json:"num_of_reports"`
 }
-type Report struct {
+type ReportRegister struct {
 	GameID                string `json:"game_id"`
 	UserID                string `json:"user_id"`
 	ClosedCaptions        string `json:"closed_captions"`
@@ -76,4 +76,19 @@ type ReportRow struct {
 	ControllerRemapping   string `json:"controller_remapping"`
 	Score                 int    `json:"score"`
 	Report                string `json:"report"`
+}
+type ReportCards struct {
+	ID                    int    `json:"id"`
+	GameID                string `json:"game_id"`
+	UserID                string `json:"user_id"`
+	Score                 int    `json:"score"`
+	Report                string `json:"report"`
+}
+type AccessibilityReport struct {
+	ID                    int    `json:"id"`
+	GameID                string `json:"game_id"`
+	ClosedCaptions        string `json:"closed_captions"`
+	ColorBlind            string `json:"color_blind"`
+	FullControllerSupport string `json:"full_controller_support"`
+	ControllerRemapping   string `json:"controller_remapping"`
 }

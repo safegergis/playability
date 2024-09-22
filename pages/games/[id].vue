@@ -84,7 +84,8 @@
     <div class="container mx-auto p-8">
       <h2 class="text-3xl font-semibold mb-4">Accessibility Reports</h2>
       <hr class="w-full mb-4" />
-      <ReportButton class="mb-4" :game-id="gameID" />
+      <ReportButton class="mb-4" :game="gameID" />
+      <ReportCardGrid :game="gameID" />
     </div>
   </div>
 </template>

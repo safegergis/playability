@@ -209,7 +209,7 @@ import * as yup from "yup";
 const uniqueReport = ref(false);
 const open = ref(false);
 const props = defineProps<{
-  gameId: number;
+  game: number;
 }>();
 
 // Define Yup validation schema

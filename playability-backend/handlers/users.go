@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"playability/auth"
 	"playability/types"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func (env *Env) PostCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -67,4 +70,16 @@ func (env *Env) PostLoginUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(token))
 
+}
+
+func (env *Env) GetUserHandler(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	idInt, _ := strconv.Atoi(id)
+	user, err := env.DB.QueryUser(idInt)
+	if err != nil {
+		log.Println("Error getting user:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(user)
 }

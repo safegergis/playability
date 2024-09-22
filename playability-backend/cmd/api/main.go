@@ -32,17 +32,21 @@ func (env *Env) MountHandlers() {
 	env.router.Get("/search", handlers.GetSearchHandler)
 	env.router.Get("/games", env.handlers.GetGamesHandler)
 
+	env.router.Route("/reports", func(r chi.Router) {
+		r.Get("/cards/{game}", env.handlers.GetReportCardsHandler)
+		//r.Get("/accessibility", env.handlers.GetAccessibilityReportsHandler)
+		
+	})
 	env.router.Route("/user", func(r chi.Router) {
 		r.Post("/login", env.handlers.PostLoginUser)
 		r.Post("/register", env.handlers.PostCreateUser)
-
-		r.Get("/reports", env.handlers.GetReportsHandler)
+		r.Get("/{id}", env.handlers.GetUserHandler)
 		// r.Get("/reports/{id}", env.handlers.GetReportHandler)
 		r.Group(func(r chi.Router) {
 			r.Use(jwtauth.Verifier(env.authtoken))
 			r.Use(jwtauth.Authenticator(env.authtoken))
 
-			r.Post("/report", env.handlers.PostReportHandler)
+			r.Post("/report/{id}", env.handlers.PostReportHandler)
 		})
 	})
 

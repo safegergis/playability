@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"playability/types"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
 )
 
 func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
-	var reportBody types.Report
+	var reportBody types.ReportRegister
 	if err := json.NewDecoder(r.Body).Decode(&reportBody); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -52,13 +53,15 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (env *Env) GetReportsHandler(w http.ResponseWriter, r *http.Request) {
-	reports, err := env.DB.GetReports()
+func (env *Env) GetReportCardsHandler(w http.ResponseWriter, r *http.Request) {
+	gameID := chi.URLParam(r, "game")
+	reports, err := env.DB.QueryReportCards(gameID)
 	if err != nil {
+		log.Println("Error getting report cards: ", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	log.Println("Reports: ", reports)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(reports)
 }

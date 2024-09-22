@@ -92,4 +92,16 @@ func (m DatabaseModel) CheckUser(email string, password string) (string, bool, e
 	return strconv.Itoa(id), true, nil
 }
 
-	
+func (m DatabaseModel) QueryUser(userID int) (types.UserRow, error) {
+	if m.DB == nil {
+		return types.UserRow{}, errors.New("database connection is nil")
+	}
+	query := `SELECT * FROM users WHERE id = $1`
+
+	var user types.UserRow
+	err := m.DB.QueryRow(query, userID).Scan(&user.ID, &user.Username, &user.Email, &user.Hash, &user.NumOfReports)
+	if err != nil {
+		return types.UserRow{}, err
+	}
+	return user, nil
+}
