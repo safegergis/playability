@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"playability/types"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
@@ -30,10 +31,16 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := claims["sub"].(string)
 
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		fmt.Println("Error converting user ID to int: ", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	// Create a ReportRow struct with the report data
 	report := types.ReportRow{
 		GameID:                reportBody.GameID,
-		UserID:                userID,
+		UserID:                userIDInt,
 		ClosedCaptions:        reportBody.ClosedCaptions,
 		ColorBlind:            reportBody.ColorBlind,
 		FullControllerSupport: reportBody.FullControllerSupport,
@@ -60,7 +67,13 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 // GetReportCardsHandler retrieves report cards for a specific game
 func (env *Env) GetReportCardsHandler(w http.ResponseWriter, r *http.Request) {
 	gameID := chi.URLParam(r, "game")
-	reports, err := env.DB.QueryReportCards(gameID)
+	gameIDInt, err := strconv.Atoi(gameID)	
+	if err != nil {
+		log.Println("Error converting game ID to int: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	reports, err := env.DB.QueryReportCards(gameIDInt)
 	if err != nil {
 		log.Println("Error getting report cards: ", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

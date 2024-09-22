@@ -1,19 +1,20 @@
 package types
 
 type Game struct {
-	ID                    int    `json:"id"`
-	Name                  string `json:"name"`
-	Cover                 int    `json:"cover"`
-	Summary               string `json:"summary"`
-	Platforms             []int  `json:"platforms"`
-	InvolvedCompanies     []int  `json:"involved_companies"`
-	ExternalGames         []int  `json:"external_games"`
-	CoverArt              string `json:"cover_art"`
-	ClosedCaptions        string `json:"closed_captions"`
-	ColorBlind            string `json:"color_blind"`
-	FullControllerSupport string `json:"full_controller_support"`
-	ControllerRemapping   string `json:"controller_remapping"`
-	SteamAvailability     bool   `json:"steam_availability"`
+	ID                    int     `json:"id"`
+	Name                  string  `json:"name"`
+	Cover                 int     `json:"cover"`
+	Summary               string  `json:"summary"`
+	Platforms             []int   `json:"platforms"`
+	InvolvedCompanies     []int   `json:"involved_companies"`
+	ExternalGames         []int   `json:"external_games"`
+	CoverArt              string  `json:"cover_art"`
+	ClosedCaptions        string  `json:"closed_captions"`
+	ColorBlind            string  `json:"color_blind"`
+	FullControllerSupport string  `json:"full_controller_support"`
+	ControllerRemapping   string  `json:"controller_remapping"`
+	SteamAvailability     bool    `json:"steam_availability"`
+	AccessibilityScore    float64 `json:"accessibility_score"`
 }
 
 // CoverArt represents the structure of cover art data from the IGDB API
@@ -57,8 +58,8 @@ type UserRow struct {
 	NumOfReports int    `json:"num_of_reports"`
 }
 type ReportRegister struct {
-	GameID                string `json:"game_id"`
-	UserID                string `json:"user_id"`
+	GameID                int    `json:"game_id"`
+	UserID                int    `json:"user_id"`
 	ClosedCaptions        string `json:"closed_captions"`
 	ColorBlind            string `json:"color_blind"`
 	FullControllerSupport string `json:"full_controller_support"`
@@ -68,8 +69,8 @@ type ReportRegister struct {
 }
 type ReportRow struct {
 	ID                    int    `json:"id"`
-	GameID                string `json:"game_id"`
-	UserID                string `json:"user_id"`
+	GameID                int    `json:"game_id"`
+	UserID                int    `json:"user_id"`
 	ClosedCaptions        string `json:"closed_captions"`
 	ColorBlind            string `json:"color_blind"`
 	FullControllerSupport string `json:"full_controller_support"`
@@ -78,17 +79,25 @@ type ReportRow struct {
 	Report                string `json:"report"`
 }
 type ReportCards struct {
-	ID                    int    `json:"id"`
-	GameID                string `json:"game_id"`
-	UserID                string `json:"user_id"`
-	Score                 int    `json:"score"`
-	Report                string `json:"report"`
+	ID     int    `json:"id"`
+	GameID int    `json:"game_id"`
+	UserID int    `json:"user_id"`
+	Score  int    `json:"score"`
+	Report string `json:"report"`
 }
-type AccessibilityReport struct {
+type FeatureReport struct {
 	ID                    int    `json:"id"`
-	GameID                string `json:"game_id"`
+	GameID                int    `json:"game_id"`
 	ClosedCaptions        string `json:"closed_captions"`
 	ColorBlind            string `json:"color_blind"`
 	FullControllerSupport string `json:"full_controller_support"`
 	ControllerRemapping   string `json:"controller_remapping"`
+}
+type Feature struct {
+	FeatureName        string  `json:"feature_name"`
+	Consensus          string  `json:"consensus"`
+	SecondaryConsensus string  `json:"secondary_consensus"`
+	TruePercentage     float64 `json:"true_percentage"`
+	LimitedPercentage  float64 `json:"limited_percentage"`
+	FalsePercentage    float64 `json:"false_percentage"`
 }

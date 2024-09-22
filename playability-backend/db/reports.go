@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 
+	"playability/pkg/calc"
 	"playability/types"
 )
 
@@ -23,7 +24,7 @@ func (m *DatabaseModel) InsertReport(report *types.ReportRow) error {
 	err := m.DB.QueryRow(checkQuery, report.GameID, report.UserID).Scan(&existingID)
 	if err != sql.ErrNoRows {
 		if err != nil {
-			log.Println("Error checking report:", err)
+			log.Println("Error checking for existing report:", err)
 			return errors.New("internal server error")
 		}
 	}
@@ -37,11 +38,27 @@ func (m *DatabaseModel) InsertReport(report *types.ReportRow) error {
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 	_, err = m.DB.Exec(query, report.GameID, report.UserID, report.ClosedCaptions, report.ColorBlind, report.FullControllerSupport, report.ControllerRemapping, report.Score, report.Report)
-	return err
+	if err != nil {
+		log.Println("Error inserting report:", err)
+		return err
+	}
+	
+	if err != nil {
+		log.Println("Error converting game ID to int:", err)
+		return err
+	}
+	scores, err := m.QueryAccessibilityScores(report.GameID)
+	if err != nil {
+		log.Println("Error querying accessibility scores:", err)
+		return err
+	}
+	accessibilityScore := calc.CalculateAccessibilityScore(scores)
+	m.UpdateAccessibilityScore(report.GameID, accessibilityScore)
+	return nil
 }
 
 // QueryReportCards retrieves report cards for a specific game
-func (m *DatabaseModel) QueryReportCards(id string) ([]types.ReportCards, error) {
+func (m *DatabaseModel) QueryReportCards(id int) ([]types.ReportCards, error) {
 	// Check if the database connection is valid
 	if m.DB == nil {
 		return nil, errors.New("database connection is nil")
@@ -74,36 +91,29 @@ func (m *DatabaseModel) QueryReportCards(id string) ([]types.ReportCards, error)
 	return reports, nil
 }
 
-// QueryAccessibilityReports retrieves all accessibility reports from the database
-func (m *DatabaseModel) QueryAccessibilityReports() ([]types.AccessibilityReport, error) {
+
+func (m *DatabaseModel) QueryAccessibilityScores(id int) ([]int, error) {
 	// Check if the database connection is valid
 	if m.DB == nil {
 		return nil, errors.New("database connection is nil")
 	}
 
-	// Query the database for all reports
-	query := `SELECT * FROM reports`
-	rows, err := m.DB.Query(query)
+	// Query the database for the accessibility score
+	query := `SELECT score FROM reports WHERE game_id = $1`
+	var scores []int
+	rows, err := m.DB.Query(query, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	// Iterate through the results and build the accessibility reports slice
-	var reports []types.AccessibilityReport
 	for rows.Next() {
-		var report types.AccessibilityReport
-		err := rows.Scan(&report.ID, &report.GameID, &report.ClosedCaptions, &report.ColorBlind, &report.FullControllerSupport, &report.ControllerRemapping)
+		var score int
+		err := rows.Scan(&score)
 		if err != nil {
 			return nil, err
 		}
-		reports = append(reports, report)
+		scores = append(scores, score)
 	}
-
-	// Check for any errors during iteration
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return reports, nil
+	return scores, nil
 }

@@ -33,7 +33,7 @@ interface Report {
   report: string;
 }
 const props = defineProps<{
-  game: string;
+  game: number;
 }>();
 const { data, error } = await useFetch<Report[]>(
   `http://localhost:8080/reports/cards/${props.game}`,

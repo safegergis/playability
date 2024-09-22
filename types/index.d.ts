@@ -27,6 +27,7 @@ declare global {
     closed_captions?: string;
     full_controller_support?: string;
     controller_remapping?: string;
+    accessibility_score?: number;
   }
 
   interface SearchResult {

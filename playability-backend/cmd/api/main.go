@@ -43,7 +43,7 @@ func (env *Env) MountHandlers() {
 	env.router.Route("/reports", func(r chi.Router) {
 		r.Get("/cards/{game}", env.handlers.GetReportCardsHandler)
 		// Commented out route for accessibility reports
-		//r.Get("/accessibility", env.handlers.GetAccessibilityReportsHandler)
+		r.Get("/features/{game}", env.handlers.GetFeatureReportsHandler)
 	})
 
 	// Set up routes for user-related actions
@@ -59,7 +59,7 @@ func (env *Env) MountHandlers() {
 			r.Use(jwtauth.Verifier(env.authtoken))
 			r.Use(jwtauth.Authenticator(env.authtoken))
 
-			r.Post("/report/{id}", env.handlers.PostReportHandler)
+			r.Post("/report", env.handlers.PostReportHandler)
 		})
 	})
 }

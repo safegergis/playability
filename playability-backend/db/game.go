@@ -60,7 +60,7 @@ func (m DatabaseModel) QueryGame(id string) ([]byte, error, bool) {
 	var platforms string
 	// Query the database
 	row := m.DB.QueryRow(sqlStatement, id)
-	err := row.Scan(&game.ID, &game.Name, &game.Summary, &game.CoverArt, &platforms, &game.ClosedCaptions, &game.ColorBlind, &game.FullControllerSupport, &game.ControllerRemapping)
+	err := row.Scan(&game.ID, &game.Name, &game.Summary, &game.CoverArt, &platforms, &game.ClosedCaptions, &game.ColorBlind, &game.FullControllerSupport, &game.ControllerRemapping, &game.AccessibilityScore)
 
 	if err == sql.ErrNoRows {
 		return nil, nil, false
@@ -82,4 +82,16 @@ func (m DatabaseModel) QueryGame(id string) ([]byte, error, bool) {
 	}
 	log.Println("db game:", string(body))
 	return body, nil, true
+}
+
+func (m DatabaseModel) UpdateAccessibilityScore(id int, score float64) {
+	sqlStatement := `
+	UPDATE games
+	SET score = $1
+	WHERE id = $2
+	`
+	_, err := m.DB.Exec(sqlStatement, score, id)
+	if err != nil {
+		log.Fatal("Error updating accessibility score:", err)
+	}
 }

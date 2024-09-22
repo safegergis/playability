@@ -13,9 +13,16 @@
             />
           </div>
           <div class="md:w-2/3">
-            <h1 class="text-3xl font-bold mb-2">
-              {{ game.name }}
-            </h1>
+            <div class="flex items-center">
+              <h1 class="text-3xl font-bold mb-2">
+                {{ game.name }}
+              </h1>
+              <AccesibilityScoreBadge
+                v-if="game.accessibility_score"
+                :score="game.accessibility_score"
+                class="ml-auto mt-4"
+              />
+            </div>
             <div v-if="game.platforms" class="mb-4">
               <h2 class="text-xl font-semibold mb-2">Platforms:</h2>
               <ul class="flex flex-wrap gap-2">
@@ -100,7 +107,7 @@ const platformDefinitions = [
   { id: 168, name: "Xbox Series X", icon: "mdi:microsoft-xbox" },
 ];
 
-const gameID = useRoute().params.id as string;
+const gameID = Number.parseInt(useRoute().params.id as string);
 const game = ref<Game | null>();
 
 const response = await useFetch<Game>("http://localhost:8080/games", {

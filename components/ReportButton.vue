@@ -239,7 +239,7 @@ console.log("JWT Token:", jwt.value);
 const onSubmit = form.handleSubmit(async (values) => {
   console.log("Form Values:", values);
   const reportSubmit = {
-    game_id: props.gameId,
+    game_id: props.game,
     closed_captions: values.closedCaptions,
     color_blind: values.colorBlind,
     full_controller_support: values.controllerSupport,
