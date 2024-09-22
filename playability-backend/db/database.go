@@ -10,6 +10,9 @@ import (
 )
 
 // Database connection constants
+type DatabaseModel struct {
+	DB *sql.DB
+}
 
 // InitDB initializes the database connection
 func InitDB() *sql.DB {

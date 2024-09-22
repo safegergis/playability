@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// GenerateAuthToken creates a new JWT authentication token
 func GenerateAuthToken() *jwtauth.JWTAuth {
 	err := godotenv.Load()
 	if err != nil {
@@ -21,6 +22,7 @@ func GenerateAuthToken() *jwtauth.JWTAuth {
 	return jwtauth.New("HS256", []byte(secret), nil)
 }
 
+// GetHash generates a bcrypt hash from a password
 func GetHash(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -29,10 +31,12 @@ func GetHash(password string) (string, error) {
 	return string(hash), nil
 }
 
-func CheckPassword(password string, hash string) ( error) {
+// CheckPassword compares a password with a bcrypt hash
+func CheckPassword(password string, hash string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }
 
+// CreateToken generates a new JWT token for a user
 func CreateToken(userid string) (string, error) {
 	err := godotenv.Load()
 	if err != nil {
@@ -47,7 +51,6 @@ func CreateToken(userid string) (string, error) {
 	})
 	tokenString, err := claims.SignedString([]byte(secret))
 	if err != nil {
-		
 		return "", err
 	}
 	return tokenString, nil
