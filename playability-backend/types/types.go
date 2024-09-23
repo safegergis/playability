@@ -1,20 +1,19 @@
 package types
 
 type Game struct {
-	ID                    int     `json:"id"`
-	Name                  string  `json:"name"`
-	Cover                 int     `json:"cover"`
-	Summary               string  `json:"summary"`
-	Platforms             []int   `json:"platforms"`
-	InvolvedCompanies     []int   `json:"involved_companies"`
-	ExternalGames         []int   `json:"external_games"`
-	CoverArt              string  `json:"cover_art"`
-	ClosedCaptions        string  `json:"closed_captions"`
-	ColorBlind            string  `json:"color_blind"`
-	FullControllerSupport string  `json:"full_controller_support"`
-	ControllerRemapping   string  `json:"controller_remapping"`
-	SteamAvailability     bool    `json:"steam_availability"`
-	AccessibilityScore    float64 `json:"accessibility_score"`
+	ID                    int    `json:"id"`
+	Name                  string `json:"name"`
+	Cover                 int    `json:"cover"`
+	Summary               string `json:"summary"`
+	Platforms             []int  `json:"platforms"`
+	InvolvedCompanies     []int  `json:"involved_companies"`
+	ExternalGames         []int  `json:"external_games"`
+	CoverArt              string `json:"cover_art"`
+	ClosedCaptions        string `json:"closed_captions"`
+	ColorBlind            string `json:"color_blind"`
+	FullControllerSupport string `json:"full_controller_support"`
+	ControllerRemapping   string `json:"controller_remapping"`
+	SteamAvailability     bool   `json:"steam_availability"`
 }
 
 // CoverArt represents the structure of cover art data from the IGDB API
@@ -93,7 +92,7 @@ type FeatureReport struct {
 	FullControllerSupport string `json:"full_controller_support"`
 	ControllerRemapping   string `json:"controller_remapping"`
 }
-type Feature struct {
+type FeatureStat struct {
 	FeatureName        string  `json:"feature_name"`
 	Consensus          string  `json:"consensus"`
 	SecondaryConsensus string  `json:"secondary_consensus"`

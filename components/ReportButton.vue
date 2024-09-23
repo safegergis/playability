@@ -233,7 +233,6 @@ const form = useForm({
 });
 
 const jwt = useCookie("jwt");
-console.log("JWT Token:", jwt.value);
 
 // Handle form submission
 const onSubmit = form.handleSubmit(async (values) => {

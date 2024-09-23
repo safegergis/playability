@@ -20,7 +20,7 @@ type FeatureStats struct {
 }
 
 // CalculateFeatureScore calculates the feature score for a game
-func CalculateFeatureScore(reports []types.FeatureReport) []types.Feature {
+func CalculateFeatureScore(reports []types.FeatureReport) []types.FeatureStat {
 	features := []string{"ColorBlind", "ClosedCaptions", "FullControllerSupport", "ControllerRemapping"}
 	supportStatuses := []string{"true", "limited", "false"}
 
@@ -35,13 +35,13 @@ func CalculateFeatureScore(reports []types.FeatureReport) []types.Feature {
 	}
 
 	// Calculate percentages and determine consensus
-	var result []types.Feature
+	var result []types.FeatureStat
 	for _, featureName := range features {
 		stats := featureStatsMap[featureName]
 		total := calculateTotal(stats.SupportLevels)
 		calculatePercentages(stats.SupportLevels, total)
 		determineConsensus(stats)
-		result = append(result, types.Feature{
+		result = append(result, types.FeatureStat{
 			FeatureName:        featureNameToDisplayName(featureName),
 			TruePercentage:     toFixed(stats.SupportLevels["true"].Percentage, 2),
 			LimitedPercentage:  toFixed(stats.SupportLevels["limited"].Percentage, 2),

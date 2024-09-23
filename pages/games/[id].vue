@@ -14,14 +14,10 @@
           </div>
           <div class="md:w-2/3">
             <div class="flex items-center">
-              <h1 class="text-3xl font-bold mb-2">
+              <h1 class="text-5xl font-bold mb-2">
                 {{ game.name }}
               </h1>
-              <AccesibilityScoreBadge
-                v-if="game.accessibility_score"
-                :score="game.accessibility_score"
-                class="ml-auto mt-4"
-              />
+              <AccesibilityScoreBadge :game="gameID" class="ml-auto mt-4" />
             </div>
             <div v-if="game.platforms" class="mb-4">
               <h2 class="text-xl font-semibold mb-2">Platforms:</h2>
@@ -43,46 +39,7 @@
             <p v-if="game.summary" class="text-lg mb-8">
               {{ game.summary }}
             </p>
-
-            <Card v-if="game" class="dark p-4 rounded-lg:">
-              <h2 class="text-xl font-semibold mb-4">
-                Essential Accessibility Features
-              </h2>
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-zinc-700 p-4 rounded-lg">
-                  <h3 class="text-lg font-medium mb-2">Colorblind Mode</h3>
-                  <p class="text-gray-300">
-                    {{ parseAccessibility(game.color_blind || "unknown") }}
-                  </p>
-                </div>
-                <div class="bg-zinc-700 p-4 rounded-lg">
-                  <h3 class="text-lg font-medium mb-2">Closed Captions</h3>
-                  <p class="text-gray-300">
-                    {{ parseAccessibility(game.closed_captions || "unknown") }}
-                  </p>
-                </div>
-                <div class="bg-zinc-700 p-4 rounded-lg">
-                  <h3 class="text-lg font-medium mb-2">Controller Support</h3>
-                  <p class="text-gray-300">
-                    {{
-                      parseAccessibility(
-                        game.full_controller_support || "unknown"
-                      )
-                    }}
-                  </p>
-                </div>
-                <div class="bg-zinc-700 p-4 rounded-lg">
-                  <h3 class="text-lg font-medium mb-2">
-                    Full Controller Remapping
-                  </h3>
-                  <p class="text-gray-300">
-                    {{
-                      parseAccessibility(game.controller_remapping || "unknown")
-                    }}
-                  </p>
-                </div>
-              </div>
-            </Card>
+            <FeatureCard :gameid="gameID" :game="game" />
           </div>
         </div>
         <p v-else class="text-xl text-center">Loading...</p>
@@ -116,6 +73,7 @@ const response = await useFetch<Game>("http://localhost:8080/games", {
     id: gameID,
   },
 });
+
 console.log("response: ", response.data.value);
 if (response.data.value) {
   game.value = response.data.value;
@@ -136,19 +94,6 @@ if (response.data.value) {
     );
   }
 }
-const parseAccessibility = (resp: string) => {
-  if (resp === "unknown") {
-    return "Data not available";
-  } else if (resp === "limited") {
-    return "Limited implementation";
-  } else if (resp === "true") {
-    return "Supported";
-  } else if (resp === "false") {
-    return "Not supported";
-  } else {
-    return "Data not available";
-  }
-};
 
 const platforms = computed(() => {
   return platformDefinitions.filter((platform) =>

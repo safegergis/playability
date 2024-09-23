@@ -42,8 +42,8 @@ func (env *Env) MountHandlers() {
 	// Set up routes for reports
 	env.router.Route("/reports", func(r chi.Router) {
 		r.Get("/cards/{game}", env.handlers.GetReportCardsHandler)
-		// Commented out route for accessibility reports
 		r.Get("/features/{game}", env.handlers.GetFeatureReportsHandler)
+		r.Get("/score/{game}", env.handlers.GetScoreHandler)
 	})
 
 	// Set up routes for user-related actions

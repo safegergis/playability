@@ -7,9 +7,22 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  score: number;
+const props = defineProps<{
+  game: number;
 }>();
+const score = ref<number>();
+const { data, error } = await useFetch<string>(
+  `http://localhost:8080/reports/score/${props.game}`,
+  {
+    method: "GET",
+  }
+);
+if (error.value) {
+  console.error(error.value);
+}
+if (data.value) {
+  score.value = parseFloat(data.value);
+}
 </script>
 
 <style></style>

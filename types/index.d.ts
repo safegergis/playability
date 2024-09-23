@@ -34,6 +34,30 @@ declare global {
     id: number;
     name: string;
   }
+
+  interface FeatureStat {
+    name: string;
+    true_percentage: number;
+    limited_percentage: number;
+    false_percentage: number;
+    consensus: string;
+    secondary_consensus: string;
+  }
+  interface Report {
+    id: string;
+    game_id: string;
+    user_id: string;
+    score: number;
+    report: string;
+    username?: string;
+  }
+  interface User {
+    id: number;
+    username: string;
+    email: string;
+    hash: string;
+    num_of_reports: number;
+  }
 }
 
 export {};

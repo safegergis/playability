@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"log"
 	"playability/types"
 )
 
@@ -14,8 +15,9 @@ func (m *DatabaseModel) QueryFeatureReports(id int) ([]types.FeatureReport, erro
 
 	// Query the database for all reports
 	query := `SELECT closed_captions, color_blind, full_controller_support, controller_remapping FROM reports WHERE game_id = $1`
-	rows, err := m.DB.Query(query)
+	rows, err := m.DB.Query(query, id)
 	if err != nil {
+		log.Println("Error querying feature reports:", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -24,8 +26,9 @@ func (m *DatabaseModel) QueryFeatureReports(id int) ([]types.FeatureReport, erro
 	var reports []types.FeatureReport
 	for rows.Next() {
 		var report types.FeatureReport
-		err := rows.Scan(&report.ID, &report.GameID, &report.ClosedCaptions, &report.ColorBlind, &report.FullControllerSupport, &report.ControllerRemapping)
+		err := rows.Scan(&report.ClosedCaptions, &report.ColorBlind, &report.FullControllerSupport, &report.ControllerRemapping)
 		if err != nil {
+			log.Println("Error scanning feature reports:", err)
 			return nil, err
 		}
 		reports = append(reports, report)
@@ -33,6 +36,7 @@ func (m *DatabaseModel) QueryFeatureReports(id int) ([]types.FeatureReport, erro
 
 	// Check for any errors during iteration
 	if err := rows.Err(); err != nil {
+		log.Println("Error during iteration:", err)
 		return nil, err
 	}
 

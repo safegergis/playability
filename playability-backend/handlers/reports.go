@@ -20,8 +20,6 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Println("ReportBody: ", reportBody)
-
 	// Extract user ID from JWT claims
 	_, claims, err := jwtauth.FromContext(r.Context())
 	if err != nil {
@@ -67,7 +65,7 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 // GetReportCardsHandler retrieves report cards for a specific game
 func (env *Env) GetReportCardsHandler(w http.ResponseWriter, r *http.Request) {
 	gameID := chi.URLParam(r, "game")
-	gameIDInt, err := strconv.Atoi(gameID)	
+	gameIDInt, err := strconv.Atoi(gameID)
 	if err != nil {
 		log.Println("Error converting game ID to int: ", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

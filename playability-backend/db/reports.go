@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 
-	"playability/pkg/calc"
 	"playability/types"
 )
 
@@ -42,18 +41,12 @@ func (m *DatabaseModel) InsertReport(report *types.ReportRow) error {
 		log.Println("Error inserting report:", err)
 		return err
 	}
-	
+
 	if err != nil {
 		log.Println("Error converting game ID to int:", err)
 		return err
 	}
-	scores, err := m.QueryAccessibilityScores(report.GameID)
-	if err != nil {
-		log.Println("Error querying accessibility scores:", err)
-		return err
-	}
-	accessibilityScore := calc.CalculateAccessibilityScore(scores)
-	m.UpdateAccessibilityScore(report.GameID, accessibilityScore)
+
 	return nil
 }
 
@@ -90,7 +83,6 @@ func (m *DatabaseModel) QueryReportCards(id int) ([]types.ReportCards, error) {
 
 	return reports, nil
 }
-
 
 func (m *DatabaseModel) QueryAccessibilityScores(id int) ([]int, error) {
 	// Check if the database connection is valid

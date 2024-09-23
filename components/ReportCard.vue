@@ -18,30 +18,25 @@
 </template>
 
 <script lang="ts" setup>
-interface Report {
-  id: string;
-  game_id: string;
-  user_id: string;
-  score: number;
-  report: string;
-  username?: string;
-}
 const props = defineProps<{
   report: Report;
 }>();
+const report = ref<Report>(props.report);
+const user = ref<User>();
 const { data, error } = await useFetch<string>(
   `http://localhost:8080/user/${props.report.user_id}`,
   {
     method: "GET",
   }
 );
-if (error) {
-  console.error(error);
+if (error.value) {
+  console.error(error.value);
 }
 if (data.value) {
-  console.log("Data: ", data.value);
-  const user = JSON.parse(data.value);
-  props.report.username = user.username;
+  user.value = JSON.parse(data.value);
+  if (user.value) {
+    report.value.username = user.value.username;
+  }
 }
 </script>
 
