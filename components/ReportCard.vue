@@ -4,11 +4,21 @@
       class="flex-shrink-0 w-24 bg-zinc-600 flex flex-col items-center justify-center p-2 rounded-l-lg"
     >
       <span class="text-sm font-semibold text-center">Accessibility Score</span>
-      <span class="text-2xl font-bold">{{ report?.score }}/10</span>
+      <span class="text-2xl font-bold">{{ report.score }}</span>
     </div>
     <div class="flex-grow">
       <CardHeader>
         <CardTitle>{{ report?.username }}</CardTitle>
+        <CardDescription>
+          {{
+            new Date(report.created_at).toLocaleDateString("en-US", {
+              weekday: "long",
+
+              month: "long",
+              day: "numeric",
+            })
+          }}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <p>{{ report?.report }}</p>

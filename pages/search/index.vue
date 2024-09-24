@@ -34,7 +34,7 @@
 </template>
 
 <script lang="ts" setup>
-const searchQuery = useRoute().params.query as string;
+const searchQuery = useRoute().query.s as string;
 
 const { data, status } = await useFetch<SearchResult[]>(
   "http://localhost:8080/search",

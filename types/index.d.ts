@@ -45,6 +45,7 @@ declare global {
   }
   interface Report {
     id: string;
+    created_at: string;
     game_id: string;
     user_id: string;
     score: number;
@@ -57,6 +58,12 @@ declare global {
     email: string;
     hash: string;
     num_of_reports: number;
+  }
+  interface FeaturedGame {
+    id: number;
+    game_id: number;
+    name: string;
+    cover_art: string;
   }
 }
 

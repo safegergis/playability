@@ -19,9 +19,9 @@
           <div class="p-1">
             <FormField v-slot="{ componentField }" name="colorBlind">
               <FormItem>
-                <FormLabel for="colorBlind" class="text-right"
-                  >Color Blind Support</FormLabel
-                >
+                <FormLabel for="colorBlind" class="text-right">
+                  Color Blind Support
+                </FormLabel>
                 <Select
                   v-bind="componentField"
                   name="colorBlind"
@@ -35,9 +35,9 @@
                   <SelectContent class="dark">
                     <SelectItem value="false">There is no support</SelectItem>
                     <SelectItem value="unknown">I don't know</SelectItem>
-                    <SelectItem value="limited"
-                      >There is limited support</SelectItem
-                    >
+                    <SelectItem value="limited">
+                      There is limited support
+                    </SelectItem>
                     <SelectItem value="true">There is full support</SelectItem>
                   </SelectContent>
                 </Select>
@@ -50,9 +50,9 @@
           <div class="p-1">
             <FormField v-slot="{ componentField }" name="closedCaptions">
               <FormItem>
-                <FormLabel for="closedCaptions" class="text-right"
-                  >Closed Caption Support</FormLabel
-                >
+                <FormLabel for="closedCaptions" class="text-right">
+                  Closed Caption Support
+                </FormLabel>
                 <Select
                   v-bind="componentField"
                   name="closedCaptions"
@@ -66,9 +66,9 @@
                   <SelectContent class="dark">
                     <SelectItem value="false">There is no support</SelectItem>
                     <SelectItem value="unknown">I don't know</SelectItem>
-                    <SelectItem value="limited"
-                      >There is limited support</SelectItem
-                    >
+                    <SelectItem value="limited">
+                      There is limited support
+                    </SelectItem>
                     <SelectItem value="true">There is full support</SelectItem>
                   </SelectContent>
                 </Select>
@@ -85,9 +85,9 @@
           <div class="p-1">
             <FormField v-slot="{ componentField }" name="controllerSupport">
               <FormItem>
-                <FormLabel for="controllerSupport" class="text-right"
-                  >Full Controller Support</FormLabel
-                >
+                <FormLabel for="controllerSupport" class="text-right">
+                  Full Controller Support
+                </FormLabel>
                 <Select
                   v-bind="componentField"
                   name="controllerSupport"
@@ -101,9 +101,9 @@
                   <SelectContent class="dark">
                     <SelectItem value="false">There is no support</SelectItem>
                     <SelectItem value="unknown">I don't know</SelectItem>
-                    <SelectItem value="limited"
-                      >There is limited support</SelectItem
-                    >
+                    <SelectItem value="limited">
+                      There is limited support
+                    </SelectItem>
                     <SelectItem value="true">There is full support</SelectItem>
                   </SelectContent>
                 </Select>
@@ -119,9 +119,9 @@
           <div class="p-1">
             <FormField v-slot="{ componentField }" name="controllerRemapping">
               <FormItem>
-                <FormLabel for="controllerRemapping" class="text-right"
-                  >Controller Remapping</FormLabel
-                >
+                <FormLabel for="controllerRemapping" class="text-right">
+                  Controller Remapping
+                </FormLabel>
                 <Select
                   v-bind="componentField"
                   name="controllerRemapping"
@@ -135,9 +135,9 @@
                   <SelectContent class="dark">
                     <SelectItem value="false">There is no support</SelectItem>
                     <SelectItem value="unknown">I don't know</SelectItem>
-                    <SelectItem value="limited"
-                      >There is limited support</SelectItem
-                    >
+                    <SelectItem value="limited">
+                      There is limited support
+                    </SelectItem>
                     <SelectItem value="true">There is full support</SelectItem>
                   </SelectContent>
                 </Select>
@@ -153,9 +153,9 @@
           <div class="p-1">
             <FormField v-slot="{ componentField }" name="score">
               <FormItem>
-                <FormLabel for="score" class="text-right"
-                  >Score (out of 10)</FormLabel
-                >
+                <FormLabel for="score" class="text-right">
+                  Score (out of 10)
+                </FormLabel>
                 <FormControl>
                   <Input
                     v-bind="componentField"
@@ -174,9 +174,9 @@
           <div class="p-1">
             <FormField v-slot="{ componentField }" name="report">
               <FormItem>
-                <FormLabel for="report" class="text-right"
-                  >Additional Comments</FormLabel
-                >
+                <FormLabel for="report" class="text-right">
+                  Additional Comments
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     v-bind="componentField"
@@ -211,6 +211,7 @@ const open = ref(false);
 const props = defineProps<{
   game: number;
 }>();
+const emit = defineEmits(["submit"]);
 
 // Define Yup validation schema
 const schema = yup.object({
@@ -266,11 +267,9 @@ const onSubmit = form.handleSubmit(async (values) => {
         });
       }
     })
-    .then((response) => {
-      console.log(response);
-      if (response.statusCode === 201) {
-        open.value = false;
-      }
+    .then(() => {
+      emit("submit");
+      open.value = false;
     });
 });
 </script>

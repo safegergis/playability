@@ -33,21 +33,8 @@ interface Report {
   report: string;
 }
 const props = defineProps<{
-  game: number;
+  reports: Report[];
 }>();
-const reports = ref<Report[]>([]);
-
-const { data, error } = await useFetch<string>(
-  `http://localhost:8080/reports/cards/${props.game}`,
-  {
-    method: "GET",
-  }
-);
-if (error.value) {
-  console.error(error.value);
-} else if (data.value) {
-  reports.value = JSON.parse(data.value);
-}
 </script>
 
 <style></style>

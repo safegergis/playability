@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"playability/types"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -78,8 +79,6 @@ func GetGame(gameID string) ([]byte, error) {
 		steamAvailability = true
 		steamID = externalGames[0].UID
 	}
-
-	log.Println("Steam ID:", steamID)
 
 	// Fetch cover art details
 	postBody = fmt.Sprintf("fields image_id; where id = %d;", game.Cover)
@@ -191,10 +190,75 @@ func GetGame(gameID string) ([]byte, error) {
 	if err != nil {
 		log.Fatal("Error marshalling game data:", err)
 	}
-	log.Println("fetched game:", string(body))
 
 	return body, nil
 
+}
+
+func GetFeaturedGames() ([]byte, error) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
+
+	postBody := "fields game_id; sort value desc; limit 10; where popularity_type = 3;"
+
+	body, err := makeIgdbRequest(postBody, igdbSecret, "popularity_primitives")
+	if err != nil {
+		log.Fatal("Error making IGDB features request:", err)
+	}
+
+	var featuredGames []types.FeaturedGame
+	err = json.Unmarshal(body, &featuredGames)
+	if err != nil {
+		log.Fatal("Error unmarshalling IGDB features response:", err)
+	}
+
+	for i, game := range featuredGames {
+		gameDetails, err := getFeaturedGameDetails(strconv.Itoa(game.GameID))
+		if err != nil {
+			log.Fatal("Error fetching game details:", err)
+		}
+		featuredGames[i].Name = gameDetails[0].Name
+		featuredGames[i].CoverArt = gameDetails[0].CoverArt
+	}
+	body, err = json.Marshal(featuredGames)
+	if err != nil {
+		log.Fatal("Error marshalling featured games data:", err)
+	}
+	return body, nil
+}
+func getFeaturedGameDetails(gameID string) ([]types.FeaturedGameDetailsResponse, error) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
+	postBody := fmt.Sprintf("fields name,cover; where id = %s;", gameID)
+	body, err := makeIgdbRequest(postBody, igdbSecret, "games")
+	if err != nil {
+		log.Fatal("Error making IGDB games request:", err)
+	}
+
+	var gameDetails []types.FeaturedGameDetailsResponse
+	err = json.Unmarshal(body, &gameDetails)
+	if err != nil {
+		log.Fatal("Error unmarshalling IGDB games response:", err)
+	}
+	postBody = fmt.Sprintf("fields image_id; where id = %d;", gameDetails[0].ImageID)
+	body, err = makeIgdbRequest(postBody, igdbSecret, "covers")
+	if err != nil {
+		log.Fatal("Error making IGDB covers request:", err)
+	}
+
+	var coverArt []types.CoverArt
+	err = json.Unmarshal(body, &coverArt)
+	if err != nil {
+		log.Fatal("Error unmarshalling IGDB covers response:", err)
+	}
+	gameDetails[0].CoverArt = fmt.Sprintf("https://images.igdb.com/igdb/image/upload/t_cover_big/%s.jpg", coverArt[0].ImageID)
+	return gameDetails, nil
 }
 
 // makeIgdbRequest sends a request to the IGDB API and returns the response

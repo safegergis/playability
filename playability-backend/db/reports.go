@@ -42,11 +42,6 @@ func (m *DatabaseModel) InsertReport(report *types.ReportRow) error {
 		return err
 	}
 
-	if err != nil {
-		log.Println("Error converting game ID to int:", err)
-		return err
-	}
-
 	return nil
 }
 
@@ -58,7 +53,7 @@ func (m *DatabaseModel) QueryReportCards(id int) ([]types.ReportCards, error) {
 	}
 
 	// Query the database for reports
-	query := `SELECT id, game_id, user_id, score, report FROM reports WHERE game_id = $1`
+	query := `SELECT id, created_at, game_id, user_id, score, report FROM reports WHERE game_id = $1 ORDER BY created_at DESC`
 	rows, err := m.DB.Query(query, id)
 	if err != nil {
 		return nil, err
@@ -69,7 +64,7 @@ func (m *DatabaseModel) QueryReportCards(id int) ([]types.ReportCards, error) {
 	var reports []types.ReportCards
 	for rows.Next() {
 		var report types.ReportCards
-		err := rows.Scan(&report.ID, &report.GameID, &report.UserID, &report.Score, &report.Report)
+		err := rows.Scan(&report.ID, &report.CreatedAt, &report.GameID, &report.UserID, &report.Score, &report.Report)
 		if err != nil {
 			return nil, err
 		}

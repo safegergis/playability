@@ -1,95 +1,111 @@
 <template>
   <div class="min-h-screen flex items-center justify-center">
-    <Card class="w-1/2 min-w-96 shadow-md rounded-md p-6">
+    <Card class="w-1/2 min-w-96 shadow-md rounded-md p-6 dark">
       <CardHeader>
-        <CardTitle class="text-2xl font-semibold text-center"
-          >User Registration</CardTitle
-        >
+        <CardTitle class="text-2xl font-semibold text-center">
+          User Registration
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <Form v-slot="{ meta }" :validation-schema="schema" @submit="onSubmit">
+        <form @submit.prevent="onSubmit">
           <div class="mb-4">
-            <label for="username" class="block text-gray-700 mb-2"
-              >Username</label
-            >
-            <p class="text-gray-500 text-sm mb">
-              This is your public display name
-            </p>
-            <Field
-              id="username"
-              name="username"
-              type="text"
-              placeholder="Enter your username"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              @input="uniqueUsername = false"
-            />
-            <ErrorMessage name="username" class="text-red-500 text-sm mt-1" />
-            <p v-if="uniqueUsername" class="text-red-500 text-sm mt-1">
-              Username is already in use
-            </p>
-          </div>
+            <FormField v-slot="{ componentField }" name="username">
+              <FormItem>
+                <FormLabel for="username" class="text-right">
+                  Username
+                </FormLabel>
+                <FormDescription>
+                  This is your public display name
+                </FormDescription>
+                <FormControl>
+                  <Input
+                    v-bind="componentField"
+                    id="username"
+                    type="text"
+                    placeholder="Enter your username"
+                    class="col-span-3 dark"
+                    @input="uniqueUsername = false"
+                  />
+                </FormControl>
+                <ErrorMessage name="username" class="text-sm text-red-500" />
+                <p v-if="uniqueUsername" class="text-red-500 text-sm mt-1">
+                  Username is already in use
+                </p>
+              </FormItem>
+            </FormField>
 
-          <div class="mb-4">
-            <label for="email" class="block text-gray-700 mb-2">Email</label>
-            <Field
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Enter your email"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              @input="uniqueEmail = false"
-            />
-            <ErrorMessage name="email" class="text-red-500 text-sm mt-1" />
-            <p v-if="uniqueEmail" class="text-red-500 text-sm mt-1">
-              Email is already in use
-            </p>
-          </div>
+            <FormField v-slot="{ componentField }" name="email">
+              <FormItem>
+                <FormLabel for="email" class="text-right">Email</FormLabel>
+                <FormControl>
+                  <Input
+                    v-bind="componentField"
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    class="col-span-3 dark"
+                    @input="uniqueEmail = false"
+                  />
+                </FormControl>
+                <ErrorMessage name="email" class="text-sm text-red-500" />
+                <p v-if="uniqueEmail" class="text-red-500 text-sm mt-1">
+                  Email is already in use
+                </p>
+              </FormItem>
+            </FormField>
 
-          <div class="mb-4">
-            <label for="password" class="block text-gray-700 mb-2"
-              >Password</label
-            >
-            <Field
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Enter your password"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <ErrorMessage name="password" class="text-red-500 text-sm mt-1" />
-          </div>
+            <FormField v-slot="{ componentField }" name="password">
+              <FormItem>
+                <FormLabel for="password" class="text-right">
+                  Password
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    v-bind="componentField"
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    class="col-span-3 dark"
+                  />
+                </FormControl>
+                <ErrorMessage name="password" class="text-sm text-red-500" />
+              </FormItem>
+            </FormField>
 
-          <div class="mb-6">
-            <label for="confirmPassword" class="block text-gray-700 mb-2"
-              >Confirm Password</label
-            >
-            <Field
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder="Confirm your password"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <ErrorMessage
-              name="confirmPassword"
-              class="text-red-500 text-sm mt-1"
-            />
-          </div>
+            <FormField v-slot="{ componentField }" name="confirmPassword">
+              <FormItem>
+                <FormLabel for="confirmPassword" class="text-right">
+                  Confirm Password
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    v-bind="componentField"
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your password"
+                    class="col-span-3 dark"
+                  />
+                </FormControl>
+                <ErrorMessage
+                  name="confirmPassword"
+                  class="text-sm text-red-500"
+                />
+              </FormItem>
+            </FormField>
 
-          <Button type="submit" class="w-full" :disabled="!meta.valid">
-            Register
-          </Button>
-        </Form>
+            <Button type="submit" class="w-full mt-4">Register</Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
-    <Toaster />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { Form, Field, ErrorMessage } from "vee-validate";
+import { ErrorMessage, useForm } from "vee-validate";
 import * as yup from "yup";
 import { useToast } from "@/components/ui/toast";
+
 const { toast } = useToast();
 
 const uniqueEmail = ref(false);
@@ -115,19 +131,18 @@ const schema = yup.object({
     .oneOf([yup.ref("password")], "Passwords must match"),
 });
 
+// Initialize useForm with the validation schema
+const form = useForm({
+  validationSchema: schema,
+});
+
 // Handle form submission
-const onSubmit = async (values: {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}) => {
+const onSubmit = form.handleSubmit(async (values) => {
   const registrationData = {
     username: values.username,
     email: values.email,
     password: values.password,
   };
-  // Reset form values after submission
 
   const { error } = await useAsyncData("register", () =>
     $fetch("http://localhost:8080/user/register", {
@@ -155,7 +170,7 @@ const onSubmit = async (values: {
       title: "Registration successful!",
       description: "You have successfully registered.",
     });
-    ///navigateTo("/");
+    navigateTo("/");
   }
-};
+});
 </script>

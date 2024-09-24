@@ -17,7 +17,7 @@
               <h1 class="text-5xl font-bold mb-2">
                 {{ game.name }}
               </h1>
-              <AccesibilityScoreBadge :game="gameID" class="ml-auto mt-4" />
+              <AccesibilityScoreBadge :score="score" class="ml-auto mt-4" />
             </div>
             <div v-if="game.platforms" class="mb-4">
               <h2 class="text-xl font-semibold mb-2">Platforms:</h2>
@@ -39,7 +39,7 @@
             <p v-if="game.summary" class="text-lg mb-8">
               {{ game.summary }}
             </p>
-            <FeatureCard :gameid="gameID" :game="game" />
+            <FeatureCard :feature-stats="featureStats" :game="game" />
           </div>
         </div>
         <p v-else class="text-xl text-center">Loading...</p>
@@ -48,8 +48,18 @@
     <div class="container mx-auto p-8">
       <h2 class="text-3xl font-semibold mb-4">Accessibility Reports</h2>
       <hr class="w-full mb-4" />
-      <ReportButton class="mb-4" :game="gameID" />
-      <ReportCardGrid :game="gameID" />
+      <ReportButton
+        class="mb-4"
+        :game="gameID"
+        @submit="
+          refreshNuxtData([
+            `reports-${gameID}`,
+            `featureStats-${gameID}`,
+            `score-${gameID}`,
+          ])
+        "
+      />
+      <ReportCardGrid :reports="reports" />
     </div>
   </div>
 </template>
@@ -66,40 +76,104 @@ const platformDefinitions = [
 
 const gameID = Number.parseInt(useRoute().params.id as string);
 const game = ref<Game | null>();
+const reports = ref<Report[]>([]);
+const featureStats = ref<FeatureStat[] | null>(null);
+const score = ref<number | null>(null);
 
-const response = await useFetch<Game>("http://localhost:8080/games", {
-  method: "GET",
-  query: {
-    id: gameID,
-  },
-});
+// Fetch game data
+const { data: gameResponse, error: gameError } = await useFetch<Game>(
+  "http://localhost:8080/games",
+  {
+    method: "GET",
+    query: {
+      id: gameID,
+    },
+  }
+);
 
-console.log("response: ", response.data.value);
-if (response.data.value) {
-  game.value = response.data.value;
-  if (
-    game.value.platforms?.includes(48) &&
-    game.value.platforms?.includes(167)
-  ) {
-    game.value.platforms = game.value.platforms.filter(
-      (platform) => platform !== 48
-    );
-  }
-  if (
-    game.value.platforms?.includes(49) &&
-    game.value.platforms?.includes(168)
-  ) {
-    game.value.platforms = game.value.platforms.filter(
-      (platform) => platform !== 49
-    );
-  }
+if (gameError.value) {
+  console.error(gameError.value);
+} else if (gameResponse.value) {
+  game.value = gameResponse.value;
+  const platformPairs = [
+    [48, 167], // PS4 and PS5
+    [49, 168], // Xbox One and Xbox Series X
+  ];
+  platformPairs.forEach(([oldPlatform, newPlatform]) => {
+    if (
+      game.value!.platforms?.includes(oldPlatform) &&
+      game.value!.platforms?.includes(newPlatform)
+    ) {
+      game.value!.platforms = game.value!.platforms.filter(
+        (platform) => platform !== oldPlatform
+      );
+    }
+  });
 }
 
-const platforms = computed(() => {
-  return platformDefinitions.filter((platform) =>
-    game.value?.platforms?.includes(platform.id)
+// Fetch reports data
+const { data: reportsResponse, error: reportError } =
+  await useLazyAsyncData<string>(`reports-${gameID}`, () =>
+    $fetch(`http://localhost:8080/reports/cards/${gameID}`, {
+      method: "GET",
+    })
   );
+
+if (reportError.value) {
+  console.error(reportError.value);
+} else if (reportsResponse.value) {
+  reports.value = JSON.parse(reportsResponse.value);
+}
+
+// Fetch feature stats data
+const { data: featureStatsResponse, error: featureStatsError } =
+  await useLazyAsyncData<string>(`featureStats-${gameID}`, () =>
+    $fetch(`http://localhost:8080/reports/features/${gameID}`, {
+      method: "GET",
+    })
+  );
+
+if (featureStatsError.value) {
+  console.log("error:", featureStatsError.value);
+  featureStats.value = null;
+} else if (featureStatsResponse.value) {
+  console.log(featureStatsResponse.value);
+  featureStats.value = JSON.parse(featureStatsResponse.value);
+}
+
+// Fetch score data
+const { data: scoreResponse, error: scoreError } =
+  await useLazyAsyncData<string>(`score-${gameID}`, () =>
+    $fetch(`http://localhost:8080/reports/score/${gameID}`, {
+      method: "GET",
+    })
+  );
+
+if (scoreError.value) {
+  console.error(scoreError.value);
+} else if (scoreResponse.value) {
+  score.value = parseFloat(scoreResponse.value);
+}
+
+// Watch for changes in responses
+watch([reportsResponse, featureStatsResponse, scoreResponse], () => {
+  if (reportsResponse.value) {
+    reports.value = JSON.parse(reportsResponse.value);
+  }
+  if (featureStatsResponse.value) {
+    featureStats.value = JSON.parse(featureStatsResponse.value);
+  }
+  if (scoreResponse.value) {
+    score.value = parseFloat(scoreResponse.value);
+  }
 });
+
+// Compute platforms
+const platforms = computed(() =>
+  platformDefinitions.filter((platform) =>
+    game.value?.platforms?.includes(platform.id)
+  )
+);
 </script>
 
 <style></style>

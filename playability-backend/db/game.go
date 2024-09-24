@@ -74,7 +74,6 @@ func (m DatabaseModel) QueryGame(id string) ([]byte, error, bool) {
 		log.Fatal("Error unmarshalling platforms:", err)
 	}
 
-	log.Println("game:", game)
 	// Marshal game struct to JSON
 	body, err := json.Marshal(game)
 	if err != nil {

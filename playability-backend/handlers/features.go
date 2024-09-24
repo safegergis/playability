@@ -27,7 +27,6 @@ func (env *Env) GetFeatureReportsHandler(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Not enough reports", http.StatusNotAcceptable)
 		return
 	} else {
-		log.Println("Feature reports:", calc.CalculateFeatureScore(reports))
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(calc.CalculateFeatureScore(reports))
 	}

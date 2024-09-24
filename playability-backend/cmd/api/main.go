@@ -38,6 +38,7 @@ func (env *Env) MountHandlers() {
 	// Set up routes for search and games
 	env.router.Get("/search", handlers.GetSearchHandler)
 	env.router.Get("/games", env.handlers.GetGamesHandler)
+	env.router.Get("/featured", handlers.GetFeaturedHandler)
 
 	// Set up routes for reports
 	env.router.Route("/reports", func(r chi.Router) {

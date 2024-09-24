@@ -23,6 +23,15 @@ func GetSearchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
 }
+func GetFeaturedHandler(w http.ResponseWriter, r *http.Request) {
+	body, err := fetch.GetFeaturedGames()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(body)
+}
 
 // gamesHandler handles requests for specific game details
 func (env *Env) GetGamesHandler(w http.ResponseWriter, r *http.Request) {

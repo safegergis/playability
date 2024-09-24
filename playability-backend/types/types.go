@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type Game struct {
 	ID                    int    `json:"id"`
 	Name                  string `json:"name"`
@@ -78,11 +80,12 @@ type ReportRow struct {
 	Report                string `json:"report"`
 }
 type ReportCards struct {
-	ID     int    `json:"id"`
-	GameID int    `json:"game_id"`
-	UserID int    `json:"user_id"`
-	Score  int    `json:"score"`
-	Report string `json:"report"`
+	ID        int       `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	GameID    int       `json:"game_id"`
+	UserID    int       `json:"user_id"`
+	Score     int       `json:"score"`
+	Report    string    `json:"report"`
 }
 type FeatureReport struct {
 	ID                    int    `json:"id"`
@@ -99,4 +102,16 @@ type FeatureStat struct {
 	TruePercentage     float64 `json:"true_percentage"`
 	LimitedPercentage  float64 `json:"limited_percentage"`
 	FalsePercentage    float64 `json:"false_percentage"`
+}
+type FeaturedGame struct {
+	ID       int    `json:"id"`
+	GameID   int    `json:"game_id"`
+	Name     string `json:"name"`
+	CoverArt string `json:"cover_art"`
+}
+type FeaturedGameDetailsResponse struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	ImageID  int    `json:"cover"`
+	CoverArt string `json:"cover_art"`
 }

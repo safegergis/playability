@@ -1,63 +1,54 @@
 <template>
-  <Card
-    v-if="
-      featureStats &&
-      colorBlind &&
-      closedCaptions &&
-      controllerSupport &&
-      controllerRemapping
-    "
-    class="dark p-4 rounded-lg"
-  >
+  <Card v-if="featureStats" class="dark p-4 rounded-lg">
     <h2 class="text-xl font-semibold mb-4">Essential Accessibility Features</h2>
     <div class="grid grid-cols-2 md:grid-cols-2 gap-4">
       <div class="bg-zinc-700 p-4 rounded-lg">
         <h3 class="text-lg font-medium mb-2">Colorblind Mode</h3>
         <p class="text-gray-300">
-          {{ parseConsensus(colorBlind.consensus) }}
+          {{ parseConsensus(featureStats[0].consensus) }}
         </p>
         <p
-          v-if="ifSecondaryConsensus(colorBlind.secondary_consensus)"
+          v-if="ifSecondaryConsensus(featureStats[0].secondary_consensus)"
           class="text-gray-300 text-sm"
         >
-          {{ parseSecondaryConsensus(colorBlind) }}
+          {{ parseSecondaryConsensus(featureStats[0]) }}
         </p>
       </div>
       <div class="bg-zinc-700 p-4 rounded-lg">
         <h3 class="text-lg font-medium mb-2">Closed Captions</h3>
         <p class="text-gray-300">
-          {{ parseConsensus(closedCaptions.consensus) }}
+          {{ parseConsensus(featureStats[1].consensus) }}
         </p>
         <p
-          v-if="ifSecondaryConsensus(closedCaptions.secondary_consensus)"
+          v-if="ifSecondaryConsensus(featureStats[1].secondary_consensus)"
           class="text-gray-300 text-sm"
         >
-          {{ parseSecondaryConsensus(closedCaptions) }}
+          {{ parseSecondaryConsensus(featureStats[1]) }}
         </p>
       </div>
       <div class="bg-zinc-700 p-4 rounded-lg">
         <h3 class="text-lg font-medium mb-2">Controller Support</h3>
         <p class="text-gray-300">
-          {{ parseConsensus(controllerSupport.consensus) }}
+          {{ parseConsensus(featureStats[2].consensus) }}
         </p>
         <p
-          v-if="ifSecondaryConsensus(controllerSupport.secondary_consensus)"
+          v-if="ifSecondaryConsensus(featureStats[2].secondary_consensus)"
           class="text-gray-300 text-sm"
         >
-          {{ parseSecondaryConsensus(controllerSupport) }}
+          {{ parseSecondaryConsensus(featureStats[2]) }}
         </p>
       </div>
       <div class="bg-zinc-700 p-4 rounded-lg">
         <h3 class="text-lg font-medium mb-2">Full Controller Remapping</h3>
         <p class="text-gray-300">
-          {{ parseConsensus(controllerRemapping.consensus) }}
+          {{ parseConsensus(featureStats[3].consensus) }}
         </p>
 
         <p
-          v-if="ifSecondaryConsensus(controllerRemapping.secondary_consensus)"
+          v-if="ifSecondaryConsensus(featureStats[3].secondary_consensus)"
           class="text-gray-300 text-sm"
         >
-          {{ parseSecondaryConsensus(controllerRemapping) }}
+          {{ parseSecondaryConsensus(featureStats[3]) }}
         </p>
       </div>
     </div>
@@ -96,37 +87,11 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-  gameid: number;
+defineProps<{
+  featureStats: FeatureStat[] | null;
   game: Game;
 }>();
 
-const fallback = ref(false);
-const featureStats = ref<FeatureStat[] | null>(null);
-
-const colorBlind = ref<FeatureStat | null>(null);
-const closedCaptions = ref<FeatureStat | null>(null);
-const controllerSupport = ref<FeatureStat | null>(null);
-const controllerRemapping = ref<FeatureStat | null>(null);
-const { data, error } = await useFetch<string>(
-  `http://localhost:8080/reports/features/${props.gameid}`,
-  {
-    method: "GET",
-  }
-);
-if (error.value) {
-  fallback.value = true;
-  console.log("error:", error.value);
-} else if (data.value) {
-  console.log(data.value);
-  featureStats.value = JSON.parse(data.value);
-  if (featureStats.value) {
-    colorBlind.value = featureStats.value[0];
-    closedCaptions.value = featureStats.value[1];
-    controllerSupport.value = featureStats.value[2];
-    controllerRemapping.value = featureStats.value[3];
-  }
-}
 const consensusMap = {
   unknown: "Data not available",
   "": "Data not available",
@@ -136,7 +101,9 @@ const consensusMap = {
 };
 
 const parseConsensus = (resp: string) => {
-  return consensusMap[resp] || "Data not available";
+  return (
+    consensusMap[resp as keyof typeof consensusMap] || "Data not available"
+  );
 };
 const ifSecondaryConsensus = (resp: string): boolean => {
   return ["true", "limited"].includes(resp);
@@ -156,7 +123,10 @@ const parseSecondaryConsensus = (feature: FeatureStat) => {
     "": () => "",
   };
 
-  return (consensusMap[feature.secondary_consensus] || (() => ""))();
+  return (
+    consensusMap[feature.secondary_consensus as keyof typeof consensusMap] ||
+    (() => "")
+  )();
 };
 </script>
 
