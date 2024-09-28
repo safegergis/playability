@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"playability/pkg/ai"
 	"playability/types"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
@@ -47,15 +49,33 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 		Score:                 reportBody.Score,
 	}
 
-	// Insert the report into the database
-	err = env.DB.InsertReport(&report)
+	moderationResponse, err := ai.Moderation(&report)
 	if err != nil {
-		if err.Error() == "report already exists" {
-			http.Error(w, "report already exists", http.StatusConflict)
-			return
-		} else {
-			fmt.Println("Error inserting report: ", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Error moderating report: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var moderation types.ModerationResponse
+	err = json.Unmarshal(moderationResponse, &moderation)
+	if err != nil {
+		log.Println("Error unmarshalling moderation response: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if moderation.Violation {
+		http.Error(w, "Report contains violation "+strings.Join(moderation.Categories, ", ")+": "+moderation.Explanation, http.StatusForbidden)
+		return
+	} else {
+		// Insert the report into the database
+		err = env.DB.InsertReport(&report)
+		if err != nil {
+			if err.Error() == "report already exists" {
+				http.Error(w, "report already exists", http.StatusConflict)
+				return
+			} else {
+				fmt.Println("Error inserting report: ", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		}
 	}
 

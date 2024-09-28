@@ -115,3 +115,8 @@ type FeaturedGameDetailsResponse struct {
 	ImageID  int    `json:"cover"`
 	CoverArt string `json:"cover_art"`
 }
+type ModerationResponse struct {
+	Violation   bool     `json:"violation"`
+	Categories  []string `json:"categories"`
+	Explanation string   `json:"explanation,omitempty"`
+}
