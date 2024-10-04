@@ -1,165 +1,59 @@
 # Playability
 
-Playability is a full stack web app that allows users to search for games, view their details, and submit feedback on the accessibility of games. This is a passion project to help make video games more accessible and inclusive for everyone.
+Playability is a full stack web app dedicated to making video games more accessible and inclusive for everyone, especially those with disabilities. Our mission is to empower gamers of all abilities by providing comprehensive accessibility information and fostering a community-driven approach to game accessibility.
 
-## Table of Contents
+## Mission Statement
 
-- [Features](#features)
-- [Technologies](#technologies)
-- [Database Schema](#database-schema)
-- [Installation](#installation)
-  - [Prerequisites](#prerequisites)
-  - [Backend Setup](#backend-setup)
-  - [Frontend Setup](#frontend-setup)
-  - [Database Setup](#database-setup)
-- [Usage](#usage)
-- [API Endpoints](#api-endpoints)
-- [Contributing](#contributing)
-- [License](#license)
+At Playability, we believe that everyone should have the opportunity to enjoy video games, regardless of their physical or cognitive abilities. We strive to break down barriers in gaming by providing accurate, user-driven accessibility information and advocating for more inclusive game design. Our goal is to create a world where no gamer is left behind due to lack of accessibility features.
 
 ## Features
 
-- **User Registration:** Secure user sign-up with validation.
-- **User Driven Feedback:** Users can submit feedback on the accessibility of games.
-- **Game Search:** Search for games by name.
-- **Game Details:** View comprehensive details including cover art, platforms, and accessibility features.
-- **Accessibility Information:** Display features like closed captions, colorblind modes, controller support, and remapping.
-- **Responsive Design:** Mobile-friendly interface using Tailwind CSS.
+### User-Facing Features
+
+- **User Registration and Authentication:** Secure user sign-up and login with email verification and password recovery.
+- **Comprehensive Game Database:** Access a vast library of games with detailed information sourced from IGDB and PCGamingWiki.
+- **Detailed Game Pages:** View comprehensive game information including:
+  - Cover art and screenshots
+  - Supported platforms
+  - Release date and developer information
+  - Genre and tags
+  - Accessibility features with user-submitted ratings and comments
+- **User-Driven Accessibility Feedback:**
+  - Submit detailed reports on a game's accessibility features
+  - Rate the effectiveness of existing accessibility options
+  - Provide comments and tips for other users with similar needs
+- **Accessibility Information:** Detailed breakdown of features such as:
+  - Closed captions and subtitle options
+  - Colorblind modes and visual assistance settings
+  - Full controller support and button remapping capabilities
+  - Difficulty settings and assist modes
+  - Text-to-speech and screen reader compatibility
+- **Accessibility Scoring System:** Aggregate user feedback to provide overall accessibility scores for games across different categories
+- **Responsive Design:** Mobile-friendly interface using Tailwind CSS, ensuring the platform is accessible across all devices
+
+### Technical Features
+
+- **RESTful API:** Well-structured API endpoints for seamless communication between frontend and backend.
+- **JWT Authentication:** Secure, token-based authentication system for protected routes and user sessions.
+- **Database Caching:** Implemented Redis caching to improve performance and reduce load on the primary database.
+- **CI/CD Pipeline:** Automated build, test, and deployment processes using GitHub Actions.
+- **Microservices Architecture:** Modular backend services for improved scalability and maintainability.
+- **Data Analytics:** Integration with analytics tools to track user behavior and improve the platform based on usage patterns.
+- **Accessibility-First Design:** Ensure that the Playability platform itself adheres to WCAG guidelines and is fully accessible to users with disabilities.
 
 ## Technologies
 
 - **Frontend:**
-  - [Nuxt 3](https://nuxt.com/) - Vue.js framework for server-side rendering.
-  - [Vue.js](https://vuejs.org/) - JavaScript framework for building user interfaces.
-  - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework.
-  - [ShadCN Vue](https://shadcn.com/) - UI component library.
-  - [Vee Validate](https://vee-validate.logaretm.com/v4/) - Form validation.
+  - [Nuxt 3](https://nuxt.com/) - Vue.js framework for server-side rendering and improved SEO
+  - [Vue.js](https://vuejs.org/) - Progressive JavaScript framework for building user interfaces
+  - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework for rapid UI development
+  - [ShadCN Vue](https://shadcn.com/) - Accessible and customizable UI component library
+  - [Vee Validate](https://vee-validate.logaretm.com/v4/) - Form validation library for Vue.js
+  - [Vue Carousel](https://ismail9k.github.io/vue3-carousel/) - Accessible carousel component for featured games
 - **Backend:**
-  - [Go](https://golang.org/) - Programming language for backend services.
-  - [Chi Mux](https://github.com/go-chi/chi) - HTTP router.
-  - [PostgreSQL](https://www.postgresql.org/) - Relational database.
-  - [IGDB API](https://api-docs.igdb.com/) - Game data source.
-  - [PCGamingWiki API](https://pcgamingwiki.com/api.php) - Accessibility information.
-
-## Installation
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) v14 or higher
-- [pnpm](https://pnpm.io/) package manager
-- [Go](https://golang.org/) v1.23.1
-- [PostgreSQL](https://www.postgresql.org/) database
-
-### Backend Setup
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/yourusername/playability.git
-   cd playability
-   ```
-
-2. **Navigate to the backend directory and install dependencies:**
-
-   ```bash
-   cd cmd/api
-   go mod download
-   ```
-
-3. **Set up environment variables:**
-
-   Create a `.env` file in the root directory with the following:
-
-   ```env
-   IGDB_CLIENT_SECRET=your_igdb_client_secret
-   ```
-
-4. **Run the backend server:**
-
-   ```bash
-   go run main.go
-   ```
-
-### Frontend Setup
-
-1. **Navigate to the frontend directory:**
-
-   ```bash
-   cd ../frontend
-   ```
-
-2. **Install dependencies:**
-
-   ```bash
-   pnpm install
-   ```
-
-3. **Configure environment variables:**
-
-   Create a `.env` file in the frontend directory if needed.
-
-4. **Run the development server:**
-
-   ```bash
-   pnpm run dev
-   ```
-
-## Usage
-
-1. **Access the application:**
-
-   Open your browser and navigate to `http://localhost:3000`.
-
-2. **Register a new user:**
-
-   - Go to the registration page.
-   - Fill in the required details and submit.
-
-3. **Search for games:**
-
-   - Use the search bar on the homepage to find games.
-   - Click on a game from the search results to view details.
-
-## API Endpoints
-
-- **GET `/games?id={game_id}`**
-  - Fetch game details by ID.
-- **POST `/user/register`**
-
-  - Register a new user.
-  - **Body Parameters:**
-    - `username` (string, required)
-    - `email` (string, required)
-    - `password` (string, required)
-
-- **GET `/search?query={search_query}`**
-  - Search for games based on query.
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. **Fork the repository.**
-2. **Create a new branch:**
-
-   ```bash
-   git checkout -b feature/YourFeature
-   ```
-
-3. **Make your changes and commit them:**
-
-   ```bash
-   git commit -m "Add some feature"
-   ```
-
-4. **Push to the branch:**
-
-   ```bash
-   git push origin feature/YourFeature
-   ```
-
-5. **Open a pull request.**
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
+  - [Go](https://golang.org/) - High-performance programming language for backend services
+  - [Chi Mux](https://github.com/go-chi/chi) - Lightweight and flexible HTTP router for Go
+  - [PostgreSQL](https://www.postgresql.org/) - Robust relational database for data persistence
+  - [IGDB API](https://api-docs.igdb.com/) - Comprehensive source for video game data
+  - [PCGamingWiki API](https://pcgamingwiki.com/api.php) - Additional source for PC game accessibility information
+  - [JWT](https://jwt.io/) - Secure user authentication and authorization

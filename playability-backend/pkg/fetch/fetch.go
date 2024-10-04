@@ -101,109 +101,123 @@ func GetGame(gameID string) ([]byte, error) {
 	fullControllerSupport := "unknown"
 	controllerRemapping := "unknown"
 	if steamAvailability {
+		// Create a new HTTP request to fetch closed captions information from PCGamingWiki
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://www.pcgamingwiki.com/w/api.php?action=cargoquery&tables=Infobox_game,Audio&fields=Audio.Closed_captions&join_on=Infobox_game._pageID=Audio._PageID&where=Infobox_game.Steam_AppID%%20HOLDS%%20%%22%s%%22&format=json", steamID), nil)
 		if err != nil {
 			log.Fatal("Error creating PC Gaming Wiki closed captions request:", err)
 		}
+		// Set User-Agent header
 		req.Header.Add("User-Agent", "Playability/1.0")
+		// Send the request
 		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			log.Fatal("Error making PC Gaming Wiki closed captions request:", err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			log.Fatal("Error making PC Gaming Wiki closed captions request:", resp.StatusCode)
-		}
-		defer resp.Body.Close()
-
-		if err != nil {
-			log.Fatal("Error making PC Gaming Wiki closed captions request:", err)
-		}
-		body, err = io.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal("Error reading PC Gaming Wiki closed captions:", err)
-		}
-		var response types.PCGamingWikiResponse
-		err = json.Unmarshal(body, &response)
-		if err != nil {
-			log.Fatal("Error unmarshalling PC Gaming Wiki closed captions:", err)
-		}
-		if len(response.CargoQuery) != 0 {
-			closedCaptions = response.CargoQuery[0].Title.ClosedCaptions
-			if err != nil {
-				log.Fatal("Error parsing closed captions:", err)
-			}
-		} else {
+		if resp.StatusCode != http.StatusOK || err != nil {
+			log.Println("Error making PC Gaming Wiki closed captions request:", err, resp.StatusCode)
 			closedCaptions = "unknown"
+		} else {
+			// Ensure the response body is closed after we're done
+			defer resp.Body.Close()
+			// Read the response body
+			body, err = io.ReadAll(resp.Body)
+			if err != nil {
+				log.Fatal("Error reading PC Gaming Wiki closed captions:", err)
+			}
+			// Parse the JSON response
+			var response types.PCGamingWikiResponse
+			err = json.Unmarshal(body, &response)
+			if err != nil {
+				log.Fatal("Error unmarshalling PC Gaming Wiki closed captions:", err)
+			}
+			// Extract closed captions information if available
+			if len(response.CargoQuery) != 0 {
+				closedCaptions = response.CargoQuery[0].Title.ClosedCaptions
+				if err != nil {
+					log.Fatal("Error parsing closed captions:", err)
+				}
+			} else {
+				closedCaptions = "unknown"
+			}
 		}
 
-		// Color blind mode
+		// Create a new HTTP request to fetch color blind mode information from PCGamingWiki
 		req, err = http.NewRequest(http.MethodGet, fmt.Sprintf("https://www.pcgamingwiki.com/w/api.php?action=cargoquery&tables=Infobox_game,Video&fields=Video.Color_blind&join_on=Infobox_game._pageID=Video._PageID&where=Infobox_game.Steam_AppID%%20HOLDS%%20%%22%s%%22&format=json", steamID), nil)
 		if err != nil {
-			log.Fatal("Error creating PC Gaming Wiki color blind mode request:", err)
+			log.Println("Error creating PC Gaming Wiki color blind mode request:", err)
 		}
+		// Set User-Agent header
 		req.Header.Add("User-Agent", "Playability/1.0")
+		// Send the request
 		resp, err = http.DefaultClient.Do(req)
-		if err != nil {
-			log.Fatal("Error making PC Gaming Wiki color blind mode request:", err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			log.Fatal("Error making PC Gaming Wiki color blind mode request:", resp.StatusCode)
-		}
-		defer resp.Body.Close()
-		body, err = io.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal("Error reading PC Gaming Wiki color blind mode:", err)
-		}
 
-		var response2 types.PCGamingWikiResponse
-		err = json.Unmarshal(body, &response2)
-		if err != nil {
-			log.Fatal("Error unmarshalling PC Gaming Wiki color blind mode:", err)
-		}
-		if len(response2.CargoQuery) != 0 {
-			colorBlind = response2.CargoQuery[0].Title.ColorBlind
-			if err != nil {
-				log.Fatal("Error parsing color blind mode:", err)
-			}
-		} else {
+		if resp.StatusCode != http.StatusOK || err != nil {
+			log.Println("Error making PC Gaming Wiki color blind mode request:", err, resp.StatusCode)
 			colorBlind = "unknown"
+		} else {
+			// Ensure the response body is closed after we're done
+			defer resp.Body.Close()
+			// Read the response body
+			body, err = io.ReadAll(resp.Body)
+			if err != nil {
+				log.Fatal("Error reading PC Gaming Wiki color blind mode:", err)
+			}
+
+			// Parse the JSON response
+			var response2 types.PCGamingWikiResponse
+			err = json.Unmarshal(body, &response2)
+			if err != nil {
+				log.Fatal("Error unmarshalling PC Gaming Wiki color blind mode:", err)
+			}
+			// Extract color blind mode information if available
+			if len(response2.CargoQuery) != 0 {
+				colorBlind = response2.CargoQuery[0].Title.ColorBlind
+				if err != nil {
+					log.Fatal("Error parsing color blind mode:", err)
+				}
+			} else {
+				colorBlind = "unknown"
+			}
 		}
 
-		// Controller support and remapping
+		// Create a new HTTP request to fetch controller support and remapping information from PCGamingWiki
 		req, err = http.NewRequest(http.MethodGet, fmt.Sprintf("https://www.pcgamingwiki.com/w/api.php?action=cargoquery&tables=Infobox_game,Input&fields=Input.Full_controller_support,Input.Controller_remapping,&join_on=Infobox_game._pageID=Input._PageID&where=Infobox_game.Steam_AppID%%20HOLDS%%20%%22%s%%22&format=json", steamID), nil)
 		if err != nil {
 			log.Fatal("Error creating PC Gaming Wiki controller support and remapping request:", err)
 		}
+		// Set User-Agent header
 		req.Header.Add("User-Agent", "Playability/1.0")
+		// Send the request
 		resp, err = http.DefaultClient.Do(req)
-		if err != nil {
-			log.Fatal("Error making PC Gaming Wiki controller support and remapping request:", err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			log.Fatal("Error making PC Gaming Wiki controller support and remapping request:", resp.StatusCode)
-		}
-		defer resp.Body.Close()
-		body, err = io.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal("Error reading PC Gaming Wiki controller support and remapping:", err)
-		}
-		var response3 types.PCGamingWikiResponse
-		err = json.Unmarshal(body, &response3)
-		if err != nil {
-			log.Fatal("Error unmarshalling PC Gaming Wiki controller support and remapping:", err)
-		}
-		if len(response3.CargoQuery) != 0 {
-			fullControllerSupport = response3.CargoQuery[0].Title.FullControllerSupport
-			if err != nil {
-				log.Fatal("Error parsing full controller support:", err)
-			}
-			controllerRemapping = response3.CargoQuery[0].Title.ControllerRemapping
-			if err != nil {
-				log.Fatal("Error parsing controller remapping:", err)
-			}
-		} else {
+		if resp.StatusCode != http.StatusOK || err != nil {
+			log.Println("Error making PC Gaming Wiki controller support and remapping request:", err)
 			fullControllerSupport = "unknown"
 			controllerRemapping = "unknown"
+		} else {
+			// Ensure the response body is closed after we're done
+			defer resp.Body.Close()
+			// Read the response body
+			body, err = io.ReadAll(resp.Body)
+			if err != nil {
+				log.Fatal("Error reading PC Gaming Wiki controller support and remapping:", err)
+			}
+			// Parse the JSON response
+			var response3 types.PCGamingWikiResponse
+			err = json.Unmarshal(body, &response3)
+			if err != nil {
+				log.Fatal("Error unmarshalling PC Gaming Wiki controller support and remapping:", err)
+			}
+			// Extract controller support and remapping information if available
+			if len(response3.CargoQuery) != 0 {
+				fullControllerSupport = response3.CargoQuery[0].Title.FullControllerSupport
+				if err != nil {
+					log.Fatal("Error parsing full controller support:", err)
+				}
+				controllerRemapping = response3.CargoQuery[0].Title.ControllerRemapping
+				if err != nil {
+					log.Fatal("Error parsing controller remapping:", err)
+				}
+			} else {
+				fullControllerSupport = "unknown"
+				controllerRemapping = "unknown"
+			}
 		}
 	}
 

@@ -40,7 +40,7 @@
 import Autoplay from "embla-carousel-autoplay";
 defineProps<{
   games: FeaturedGame[];
-  status: "pending" | "success" | "error";
+  status: "pending" | "success" | "error" | "idle";
 }>();
 </script>
 

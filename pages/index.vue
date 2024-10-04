@@ -77,14 +77,12 @@
 <script setup lang="ts">
 const FeaturedGames = ref<FeaturedGame[]>([]);
 
-const { data, error, status } = await useLazyAsyncData<FeaturedGame[]>(
-  "featured",
-  () => $fetch("http://localhost:8080/featured")
+const { data, error, status } = await useAsyncData<FeaturedGame[]>(() =>
+  $fetch("http://localhost:8080/featured")
 );
 if (error.value) {
   console.error(error.value);
 } else if (data.value) {
-  console.log(data.value);
   FeaturedGames.value = data.value;
 }
 </script>

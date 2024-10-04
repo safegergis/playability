@@ -257,14 +257,9 @@ const onSubmit = form.handleSubmit(async (values) => {
     body: JSON.stringify(reportSubmit),
   })
     .catch((error) => {
-      console.log(error);
+      console.log(error.statusMessage);
       if (error.statusCode === 409) {
         uniqueReport.value = true;
-      } else {
-        throw createError({
-          statusCode: error.statusCode,
-          statusMessage: error.statusMessage,
-        });
       }
     })
     .then(() => {
