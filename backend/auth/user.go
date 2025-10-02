@@ -7,18 +7,16 @@ import (
 
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // GenerateAuthToken creates a new JWT authentication token
 func GenerateAuthToken() *jwtauth.JWTAuth {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	secret := os.Getenv("JWT_SECRET")
-	
+	if secret == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
+
 	return jwtauth.New("HS256", []byte(secret), nil)
 }
 
@@ -38,11 +36,10 @@ func CheckPassword(password string, hash string) error {
 
 // CreateToken generates a new JWT token for a user
 func CreateToken(userid string) (string, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": userid,
 		"iss": "playability",

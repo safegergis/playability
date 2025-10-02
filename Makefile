@@ -99,9 +99,9 @@ ps:
 ## db-init: Initialize database with schema
 db-init:
 	@echo "$(BLUE)Initializing database...$(NC)"
-	@if [ ! -f backend/.env ]; then \
-		echo "$(RED)✗ Error: backend/.env not found$(NC)"; \
-		echo "$(YELLOW)Run: cp backend/.env.example backend/.env$(NC)"; \
+	@if [ ! -f .env ]; then \
+		echo "$(RED)✗ Error: .env not found$(NC)"; \
+		echo "$(YELLOW)Run: cp .env.example .env$(NC)"; \
 		exit 1; \
 	fi
 	./database/scripts/init.sh
@@ -155,28 +155,24 @@ db-shell:
 db-logs:
 	@docker-compose logs -f postgres
 
-## dev: Start in development mode
+## dev: Start in development mode with hot reload
 dev:
-	@echo "$(BLUE)Starting development environment...$(NC)"
-	@if [ ! -f frontend/.env ]; then \
-		echo "$(YELLOW)Creating frontend/.env from .env.example...$(NC)"; \
-		cp frontend/.env.example frontend/.env; \
-	fi
-	@if [ ! -f backend/.env ]; then \
-		echo "$(YELLOW)Creating backend/.env from .env.example...$(NC)"; \
-		cp backend/.env.example backend/.env; \
-		echo "$(RED)⚠ Please edit backend/.env with your credentials$(NC)"; \
+	@echo "$(BLUE)Starting development environment with hot reload...$(NC)"
+	@if [ ! -f .env ]; then \
+		echo "$(YELLOW)Creating .env from .env.example...$(NC)"; \
+		cp .env.example .env; \
+		echo "$(RED)⚠ Please edit .env with your credentials$(NC)"; \
 		exit 1; \
 	fi
-	docker-compose up -d
+	docker-compose --profile dev up -d postgres backend frontend-dev
 	@echo "$(GREEN)✓ Development environment started$(NC)"
 	@echo ""
 	@echo "$(BLUE)Services:$(NC)"
-	@echo "  Frontend: http://localhost:3000"
+	@echo "  Frontend: http://localhost:3000 (hot reload enabled)"
 	@echo "  Backend:  http://localhost:8080"
 	@echo "  Database: localhost:5432"
 	@echo ""
-	@echo "$(YELLOW)View logs: make logs$(NC)"
+	@echo "$(YELLOW)View logs: make logs SVC=frontend-dev$(NC)"
 
 ## frontend: Start only frontend
 frontend:
@@ -211,8 +207,8 @@ lint:
 ## prod-up: Start in production mode
 prod-up:
 	@echo "$(BLUE)Starting production environment...$(NC)"
-	@if [ ! -f backend/.env ]; then \
-		echo "$(RED)✗ Error: backend/.env file not found$(NC)"; \
+	@if [ ! -f .env ]; then \
+		echo "$(RED)✗ Error: .env file not found$(NC)"; \
 		exit 1; \
 	fi
 	docker-compose -f docker-compose.production.yml up -d

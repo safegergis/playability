@@ -5,8 +5,8 @@ echo "======================================"
 echo "Playability Database Migration Tool"
 echo "======================================"
 
-if [ -f backend/.env ]; then
-    export $(cat backend/.env | grep -v '^#' | xargs)
+if [ -f .env ]; then
+    export $(cat .env | grep -v '^#' | xargs)
 fi
 
 DB_HOST="${DB_HOST:-localhost}"

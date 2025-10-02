@@ -7,16 +7,10 @@ import (
 	"os"
 	"playability/types"
 
-	"github.com/joho/godotenv"
 	"github.com/liushuangls/go-anthropic/v2"
 )
 
 func Moderation(report *types.ReportRow) ([]byte, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, err
-	}
-
 	client := anthropic.NewClient(os.Getenv("CLAUDE_API_KEY"))
 
 	temperature := float32(0.0)

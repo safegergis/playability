@@ -10,16 +10,9 @@ import (
 	"os"
 	"playability/types"
 	"strconv"
-
-	"github.com/joho/godotenv"
 )
 
 func GetSearch(searchTerm string) ([]byte, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
 
 	postBody := fmt.Sprintf("fields id,name;where platforms = (167,168,48,49,6,130) & category = (0,8,9); search \"%s\"; limit 50;", searchTerm)
@@ -34,11 +27,6 @@ func GetSearch(searchTerm string) ([]byte, error) {
 
 // getGame retrieves detailed information about a specific game
 func GetGame(gameID string) ([]byte, error) {
-	// Load environment variables
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
 
 	// Fetch game details from IGDB
@@ -241,10 +229,6 @@ func GetGame(gameID string) ([]byte, error) {
 }
 
 func GetFeaturedGames() ([]byte, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
 
 	postBody := "fields game_id; sort value desc; limit 10; where popularity_type = 3;"
@@ -275,10 +259,6 @@ func GetFeaturedGames() ([]byte, error) {
 	return body, nil
 }
 func getFeaturedGameDetails(gameID string) ([]types.FeaturedGameDetailsResponse, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
 	postBody := fmt.Sprintf("fields name,cover; where id = %s;", gameID)
 	body, err := makeIgdbRequest(postBody, igdbSecret, "games")
