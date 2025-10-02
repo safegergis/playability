@@ -3,9 +3,7 @@
     v-if="reports && reports.length > 0"
     class="grid grid-cols-1 sm:grid-cols-2 gap-4"
   >
-    <div v-for="report in reports" :key="report.id">
-      <ReportCard :report="report" />
-    </div>
+    <ReportCard v-for="report in reports" :key="report.id" :report="report" />
   </div>
   <div
     v-else

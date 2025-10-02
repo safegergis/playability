@@ -108,8 +108,9 @@ func (env *Env) PostLoginUser(w http.ResponseWriter, r *http.Request) {
 
 	// Return the token to the client
 	log.Printf("[PostLoginUser] Successfully authenticated user ID: %s", id)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(token))
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
 
 // GetUserHandler retrieves user information based on the provided ID

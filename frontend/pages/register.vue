@@ -137,7 +137,6 @@ const form = useForm({
 });
 
 const config = useRuntimeConfig();
-const backendUrl = config.public.clientApiUrl || "http://localhost:8080";
 
 // Handle form submission
 const onSubmit = form.handleSubmit(async (values) => {
@@ -148,7 +147,8 @@ const onSubmit = form.handleSubmit(async (values) => {
   };
 
   const { error } = await useAsyncData("register", () =>
-    $fetch(`${backendUrl}/user/register`, {
+    $fetch('/user/register', {
+      baseURL: config.public.apiUrl,
       method: "POST",
       body: registrationData,
     })

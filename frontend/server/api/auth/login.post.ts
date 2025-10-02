@@ -1,10 +1,10 @@
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
 
-    // Use backend service name in Docker, localhost for development
-    const backendUrl = useRuntimeConfig(event).public.apiUrl || "http://backend:8080";
+    const config = useRuntimeConfig(event);
+    const backendUrl = config.apiUrl;
 
-    const res = await $fetch(`${backendUrl}/user/login`, {
+    const res = await $fetch<{ token: string }>(`${backendUrl}/user/login`, {
         method: "POST",
         body: body,
     }).catch((error) => {
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     });
 
     console.log("[login.post] Login successful, setting cookie");
-    setCookie(event, "jwt", res as string, {
+    setCookie(event, "jwt", res.token, {
         httpOnly: true,
         maxAge: 86400,
         path: "/",
@@ -24,5 +24,5 @@ export default defineEventHandler(async (event) => {
         expires: new Date(Date.now() + 86400 * 1000),
     });
 
-    return res;
+    return { success: true };
 });

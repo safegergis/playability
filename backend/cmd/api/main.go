@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"net/http"
 	"playability/auth"
 	"playability/db"
@@ -85,5 +86,5 @@ func main() {
 	env.MountHandlers()
 
 	// Start the server on port 8080
-	http.ListenAndServe(":8080", env.router)
+	http.ListenAndServe(":" + os.Getenv("BACKEND_PORT"), env.router)
 }

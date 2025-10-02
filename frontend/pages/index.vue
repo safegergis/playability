@@ -75,19 +75,16 @@
 </template>
 
 <script setup lang="ts">
-const FeaturedGames = ref<FeaturedGame[]>([]);
-
 const config = useRuntimeConfig();
-const backendUrl = config.public.clientApiUrl || "http://localhost:8080";
 
-const { data, error, status } = await useFetch<FeaturedGame[]>(
-    `${backendUrl}/featured`
+const { data: FeaturedGames, status } = await useFetch<FeaturedGame[]>(
+    '/featured',
+    {
+        key: 'featured-games',
+        baseURL: import.meta.server ? config.apiUrl : config.public.apiUrl,
+        default: () => []
+    }
 );
-if (error.value) {
-    console.error(error.value);
-} else if (data.value) {
-    FeaturedGames.value = data.value;
-}
 </script>
 
 <style></style>
