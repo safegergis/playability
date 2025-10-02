@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
     const jwt = getCookie(event, "jwt");
 
     // Use backend service name in Docker, localhost for development
-    const backendUrl = useRuntimeConfig(event).apiUrl;
+    const backendUrl = useRuntimeConfig(event).public.apiUrl || "http://backend:8080";
 
     const res = await $fetch(`${backendUrl}/user/report`, {
         method: "POST",

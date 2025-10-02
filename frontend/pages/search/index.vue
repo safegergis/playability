@@ -37,7 +37,7 @@
 const searchQuery = useRoute().query.s as string;
 
 const config = useRuntimeConfig();
-const backendUrl = config.public.apiUrl || "http://backend:8080";
+const backendUrl = config.public.clientApiUrl || "http://localhost:8080";
 
 const { data, status } = await useFetch<SearchResult[]>(
   `${backendUrl}/search`,

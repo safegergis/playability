@@ -137,7 +137,7 @@ const form = useForm({
 });
 
 const config = useRuntimeConfig();
-const backendUrl = config.public.apiUrl || "http://backend:8080";
+const backendUrl = config.public.clientApiUrl || "http://localhost:8080";
 
 // Handle form submission
 const onSubmit = form.handleSubmit(async (values) => {

@@ -78,7 +78,7 @@
 const FeaturedGames = ref<FeaturedGame[]>([]);
 
 const config = useRuntimeConfig();
-const backendUrl = config.public.apiUrl || "http://backend:8080";
+const backendUrl = config.public.clientApiUrl || "http://localhost:8080";
 
 const { data, error, status } = await useFetch<FeaturedGame[]>(
     `${backendUrl}/featured`
