@@ -17,8 +17,11 @@ import (
 func (m DatabaseModel) InsertUser(user types.UserRegister) error {
 	// Check if database connection is valid
 	if m.DB == nil {
+		log.Printf("[InsertUser] Database connection is nil")
 		return errors.New("database connection is nil")
 	}
+
+	log.Printf("[InsertUser] Attempting to insert user: %s (email: %s)", user.Username, user.Email)
 
 	// Check if email or username already exists
 	var existingID int
@@ -27,7 +30,7 @@ func (m DatabaseModel) InsertUser(user types.UserRegister) error {
 
 	if err != sql.ErrNoRows {
 		if err != nil {
-			log.Println("Error checking email/username:", err)
+			log.Printf("[InsertUser] Error checking existing email/username for %s: %v", user.Email, err)
 			return errors.New("internal server error")
 		}
 		// If we found a matching record, determine which field caused the conflict
@@ -35,10 +38,10 @@ func (m DatabaseModel) InsertUser(user types.UserRegister) error {
 			checkEmailQuery := `SELECT id FROM users WHERE email = $1`
 			err := m.DB.QueryRow(checkEmailQuery, user.Email).Scan(&existingID)
 			if err == nil {
-				log.Println("email error")
+				log.Printf("[InsertUser] Email already in use: %s", user.Email)
 				return errors.New("email is already in use")
 			} else {
-				log.Println("username error")
+				log.Printf("[InsertUser] Username already in use: %s", user.Username)
 				return errors.New("username is already in use")
 			}
 		}
@@ -49,7 +52,7 @@ func (m DatabaseModel) InsertUser(user types.UserRegister) error {
 	// Hash the password
 	hash, err := auth.GetHash(user.Password)
 	if err != nil {
-		log.Println("Error hashing password:", err)
+		log.Printf("[InsertUser] Error hashing password for user %s: %v", user.Username, err)
 		return errors.New("internal server error")
 	}
 
@@ -59,18 +62,20 @@ func (m DatabaseModel) InsertUser(user types.UserRegister) error {
 	if err != nil {
 		// Check if the error is due to a unique constraint violation
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" { // unique_violation
-			if pqErr.Constraint == "users_email_key" {
+			log.Printf("[InsertUser] Unique constraint violation: %s (constraint: %s)", pqErr.Code, pqErr.Constraint)
+			if pqErr.Constraint == "unique_email" {
 				return errors.New("email is already in use")
-			} else if pqErr.Constraint == "users_username_key" {
+			} else if pqErr.Constraint == "unique_username" {
 				return errors.New("username is already in use")
 			} else {
 				return errors.New("user already exists")
 			}
 		}
-		log.Println("Error inserting user:", err)
+		log.Printf("[InsertUser] Error inserting user %s: %v", user.Username, err)
 		return errors.New("internal server error")
 	}
 
+	log.Printf("[InsertUser] Successfully created user: %s (email: %s)", user.Username, user.Email)
 	return nil
 }
 
@@ -78,22 +83,31 @@ func (m DatabaseModel) InsertUser(user types.UserRegister) error {
 func (m DatabaseModel) CheckUser(email string, password string) (string, bool, error) {
 	// Check if database connection is valid
 	if m.DB == nil {
+		log.Printf("[CheckUser] Database connection is nil")
 		return "", false, errors.New("database connection is nil")
 	}
 
 	var hash string
 	email = strings.ToLower(email)
 
+	log.Printf("[CheckUser] Attempting login for email: %s", email)
+
 	// Retrieve the hash for the given email
 	hashQuery := `SELECT hash FROM users WHERE email = $1`
 	err := m.DB.QueryRow(hashQuery, email).Scan(&hash)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("[CheckUser] No user found with email: %s", email)
+		} else {
+			log.Printf("[CheckUser] Error querying user by email %s: %v", email, err)
+		}
 		return "", false, nil
 	}
 
 	// Check if the provided password matches the stored hash
 	err = auth.CheckPassword(password, hash)
-	if err != nil {	
+	if err != nil {
+		log.Printf("[CheckUser] Invalid password for email: %s", email)
 		return "", false, nil
 	}
 
@@ -102,10 +116,11 @@ func (m DatabaseModel) CheckUser(email string, password string) (string, bool, e
 	var id int
 	err = m.DB.QueryRow(idQuery, email).Scan(&id)
 	if err != nil {
-		log.Println("Error checking user:", err)
+		log.Printf("[CheckUser] Error retrieving user ID for %s: %v", email, err)
 		return "", false, err
 	}
 
+	log.Printf("[CheckUser] Successful login for user ID: %d", id)
 	return strconv.Itoa(id), true, nil
 }
 
@@ -113,16 +128,25 @@ func (m DatabaseModel) CheckUser(email string, password string) (string, bool, e
 func (m DatabaseModel) QueryUser(userID int) (types.UserRow, error) {
 	// Check if database connection is valid
 	if m.DB == nil {
+		log.Printf("[QueryUser] Database connection is nil")
 		return types.UserRow{}, errors.New("database connection is nil")
 	}
 
-	query := `SELECT * FROM users WHERE id = $1`
+	log.Printf("[QueryUser] Fetching user with ID: %d", userID)
+
+	query := `SELECT id, username, email, hash, num_reports FROM users WHERE id = $1`
 
 	var user types.UserRow
 	err := m.DB.QueryRow(query, userID).Scan(&user.ID, &user.Username, &user.Email, &user.Hash, &user.NumOfReports)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("[QueryUser] No user found with ID: %d", userID)
+		} else {
+			log.Printf("[QueryUser] Error querying user ID %d: %v", userID, err)
+		}
 		return types.UserRow{}, err
 	}
 
+	log.Printf("[QueryUser] Successfully fetched user: %s (ID: %d)", user.Username, userID)
 	return user, nil
 }

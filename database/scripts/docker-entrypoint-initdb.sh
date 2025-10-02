@@ -13,7 +13,12 @@ echo ""
 
 echo "Step 1: Creating custom types..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-    CREATE TYPE IF NOT EXISTS feature_support AS ENUM ('false', 'unknown', 'limited', 'true');
+    DO \$\$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'feature_support') THEN
+            CREATE TYPE feature_support AS ENUM ('false', 'unknown', 'limited', 'true');
+        END IF;
+    END \$\$;
 EOSQL
 echo "✓ Custom types created"
 
@@ -58,6 +63,17 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         controller_remapping feature_support NOT NULL,
         score VARCHAR(255) NOT NULL,
         report TEXT
+    );
+
+    -- Create featured_games table for caching
+    CREATE TABLE IF NOT EXISTS featured_games (
+        id SERIAL PRIMARY KEY,
+        game_id INTEGER NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        cover_art VARCHAR(255) NOT NULL,
+        position INTEGER NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
 EOSQL
 echo "✓ Tables created"
@@ -121,6 +137,8 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE INDEX IF NOT EXISTS idx_reports_game_id_created_at ON reports(game_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id);
     CREATE INDEX IF NOT EXISTS idx_reports_game_user ON reports(game_id, user_id);
+    CREATE INDEX IF NOT EXISTS idx_featured_games_position ON featured_games(position ASC);
+    CREATE INDEX IF NOT EXISTS idx_featured_games_updated_at ON featured_games(updated_at DESC);
 EOSQL
 echo "✓ Indexes created"
 
@@ -143,6 +161,10 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
 
     DROP TRIGGER IF EXISTS update_games_updated_at ON games;
     CREATE TRIGGER update_games_updated_at BEFORE UPDATE ON games
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+    DROP TRIGGER IF EXISTS update_featured_games_updated_at ON featured_games;
+    CREATE TRIGGER update_featured_games_updated_at BEFORE UPDATE ON featured_games
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 EOSQL
 echo "✓ Triggers created"

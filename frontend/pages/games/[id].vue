@@ -80,9 +80,12 @@ const reports = ref<Report[]>([]);
 const featureStats = ref<FeatureStat[] | null>(null);
 const score = ref<number | null>(null);
 
+const config = useRuntimeConfig();
+const backendUrl = config.public.apiUrl || "http://backend:8080";
+
 // Fetch game data
 const { data: gameResponse, error: gameError } = await useFetch<Game>(
-  "http://localhost:8080/games",
+  `${backendUrl}/games`,
   {
     method: "GET",
     query: {
@@ -114,7 +117,7 @@ if (gameError.value) {
 // Fetch reports data
 const { data: reportsResponse, error: reportError } =
   await useLazyAsyncData<string>(`reports-${gameID}`, () =>
-    $fetch(`http://localhost:8080/reports/cards/${gameID}`, {
+    $fetch(`${backendUrl}/reports/cards/${gameID}`, {
       method: "GET",
     })
   );
@@ -128,7 +131,7 @@ if (reportError.value) {
 // Fetch feature stats data
 const { data: featureStatsResponse, error: featureStatsError } =
   await useLazyAsyncData<string>(`featureStats-${gameID}`, () =>
-    $fetch(`http://localhost:8080/reports/features/${gameID}`, {
+    $fetch(`${backendUrl}/reports/features/${gameID}`, {
       method: "GET",
     })
   );
@@ -144,7 +147,7 @@ if (featureStatsError.value) {
 // Fetch score data
 const { data: scoreResponse, error: scoreError } =
   await useLazyAsyncData<string>(`score-${gameID}`, () =>
-    $fetch(`http://localhost:8080/reports/score/${gameID}`, {
+    $fetch(`${backendUrl}/reports/score/${gameID}`, {
       method: "GET",
     })
   );

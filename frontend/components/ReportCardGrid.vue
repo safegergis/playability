@@ -25,13 +25,6 @@
 </template>
 
 <script lang="ts" setup>
-interface Report {
-  id: string;
-  game_id: string;
-  user_id: string;
-  score: number;
-  report: string;
-}
 const props = defineProps<{
   reports: Report[];
 }>();

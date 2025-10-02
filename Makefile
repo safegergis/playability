@@ -24,10 +24,6 @@ help:
 	@echo "  make ps              - Show running containers"
 	@echo ""
 	@echo "$(GREEN)Database Commands:$(NC)"
-	@echo "  make db-init         - Initialize database with schema"
-	@echo "  make db-migrate      - Run database migrations"
-	@echo "  make db-migrate-down - Rollback last migration"
-	@echo "  make db-migrate-status - Show migration status"
 	@echo "  make db-backup       - Create database backup"
 	@echo "  make db-restore      - Restore database from backup"
 	@echo "  make db-shell        - Open PostgreSQL shell"
@@ -95,34 +91,6 @@ clean:
 ps:
 	@echo "$(BLUE)Running containers:$(NC)"
 	@docker-compose ps
-
-## db-init: Initialize database with schema
-db-init:
-	@echo "$(BLUE)Initializing database...$(NC)"
-	@if [ ! -f .env ]; then \
-		echo "$(RED)✗ Error: .env not found$(NC)"; \
-		echo "$(YELLOW)Run: cp .env.example .env$(NC)"; \
-		exit 1; \
-	fi
-	./database/scripts/init.sh
-	@echo "$(GREEN)✓ Database initialized$(NC)"
-
-## db-migrate: Run database migrations
-db-migrate:
-	@echo "$(BLUE)Running database migrations...$(NC)"
-	docker-compose run --rm db-migrate /migrate.sh up
-	@echo "$(GREEN)✓ Migrations complete$(NC)"
-
-## db-migrate-down: Rollback last migration
-db-migrate-down:
-	@echo "$(YELLOW)Rolling back last migration...$(NC)"
-	docker-compose run --rm db-migrate /migrate.sh down
-	@echo "$(GREEN)✓ Rollback complete$(NC)"
-
-## db-migrate-status: Show migration status
-db-migrate-status:
-	@echo "$(BLUE)Migration status:$(NC)"
-	docker-compose run --rm db-migrate /migrate.sh status
 
 ## db-backup: Create database backup
 db-backup:

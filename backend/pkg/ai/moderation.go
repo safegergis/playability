@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"playability/types"
 
@@ -11,7 +12,19 @@ import (
 )
 
 func Moderation(report *types.ReportRow) ([]byte, error) {
-	client := anthropic.NewClient(os.Getenv("CLAUDE_API_KEY"))
+	apiKey := os.Getenv("CLAUDE_API_KEY")
+	if apiKey == "" {
+		log.Printf("[Moderation] CLAUDE_API_KEY environment variable is not set")
+		return nil, fmt.Errorf("CLAUDE_API_KEY environment variable is not set")
+	}
+
+	if report == nil {
+		return nil, fmt.Errorf("report cannot be nil")
+	}
+
+	log.Printf("[Moderation] Starting moderation for report ID: %d", report.ID)
+
+	client := anthropic.NewClient(apiKey)
 
 	temperature := float32(0.0)
 	// Define unsafe categories
@@ -36,6 +49,13 @@ func Moderation(report *types.ReportRow) ([]byte, error) {
 	}
 
 	reportText := report.Report
+	if reportText == "" {
+		log.Printf("[Moderation] Report text is empty for report ID: %d", report.ID)
+		return nil, fmt.Errorf("report text cannot be empty")
+	}
+
+	log.Printf("[Moderation] Analyzing report text (length: %d characters)", len(reportText))
+
 	// Construct the prompt for Claude
 	assessmentPrompt := fmt.Sprintf(`
     Determine whether the following message warrants moderation, 
@@ -55,6 +75,8 @@ func Moderation(report *types.ReportRow) ([]byte, error) {
     "categories": [Comma-separated list of violated categories],
     "explanation": [Optional. Only include if there is a violation.]
     }}`, reportText, unsafeCategoryStr)
+	log.Printf("[Moderation] Sending request to Claude API")
+
 	resp, err := client.CreateMessages(context.Background(), anthropic.MessagesRequest{
 		Model: anthropic.ModelClaude3Haiku20240307,
 		Messages: []anthropic.Message{
@@ -75,12 +97,21 @@ func Moderation(report *types.ReportRow) ([]byte, error) {
 	if err != nil {
 		var aiErr *anthropic.APIError
 		if errors.As(err, &aiErr) {
-			fmt.Printf("Messages error, type: %s, message: %s", aiErr.Type, aiErr.Message)
+			log.Printf("[Moderation] Claude API error for report ID %d - Type: %s, Message: %s", report.ID, aiErr.Type, aiErr.Message)
+			return nil, fmt.Errorf("Claude API error (type: %s): %s", aiErr.Type, aiErr.Message)
 		} else {
-			fmt.Printf("Error: %v", err)
+			log.Printf("[Moderation] Unexpected error calling Claude API for report ID %d: %v", report.ID, err)
+			return nil, fmt.Errorf("error calling Claude API: %w", err)
 		}
-		return nil, err
 	}
 
-	return []byte(resp.Content[0].GetText()), nil
+	if len(resp.Content) == 0 {
+		log.Printf("[Moderation] Claude API returned empty content for report ID %d", report.ID)
+		return nil, fmt.Errorf("Claude API returned empty response")
+	}
+
+	responseText := resp.Content[0].GetText()
+	log.Printf("[Moderation] Claude API response for report ID %d (length: %d): %s", report.ID, len(responseText), responseText)
+
+	return []byte(responseText), nil
 }

@@ -136,6 +136,9 @@ const form = useForm({
   validationSchema: schema,
 });
 
+const config = useRuntimeConfig();
+const backendUrl = config.public.apiUrl || "http://backend:8080";
+
 // Handle form submission
 const onSubmit = form.handleSubmit(async (values) => {
   const registrationData = {
@@ -145,7 +148,7 @@ const onSubmit = form.handleSubmit(async (values) => {
   };
 
   const { error } = await useAsyncData("register", () =>
-    $fetch("http://localhost:8080/user/register", {
+    $fetch(`${backendUrl}/user/register`, {
       method: "POST",
       body: registrationData,
     })

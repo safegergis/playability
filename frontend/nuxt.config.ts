@@ -11,6 +11,13 @@ export default defineNuxtConfig({
         "@vee-validate/nuxt",
     ],
 
+    runtimeConfig: {
+        public: {
+            apiUrl: process.env.BACKEND_API_URL,
+            clientApiUrl: "http://localhost:8080",
+        },
+    },
+
     tailwindcss: {
         cssPath: "~/assets/css/tailwind.css",
         configPath: "~/tailwind.config.js",

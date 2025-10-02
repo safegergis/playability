@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -72,13 +70,17 @@ services:
       dockerfile: Dockerfile.dev
     container_name: playability-frontend-dev
     restart: unless-stopped
-    ports: 
+    ports:
       - "3000:3000"
       - "24678:24678"
     volumes:
       - ./frontend:/app
       - /app/node_modules
       - /app/.nuxt
+    tmpfs:
+      - /tmp
+    environment:
+      - BACKEND_API_URL=${BACKEND_API_URL}
     depends_on:
       - backend
     networks:
@@ -107,25 +109,6 @@ services:
     profiles:
       - backup
     entrypoint: ["/bin/sh", "/backup.sh", "full"]
-
-  # Database Migration Service
-  db-migrate:
-    image: postgres:16-alpine
-    container_name: playability-db-migrate
-    restart: "no"
-    env_file:
-      - .env
-    volumes:
-      - ./database/migrations:/migrations:ro
-      - ./database/scripts/migrate.sh:/migrate.sh:ro
-    networks:
-      - playability-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-    profiles:
-      - tools
-    entrypoint: ["/bin/sh"]
 
 networks:
   playability-network:

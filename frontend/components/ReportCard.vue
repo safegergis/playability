@@ -1,5 +1,5 @@
 <template>
-  <Card class="dark w-full flex">
+  <Card v-if="report" class="dark w-full flex">
     <div
       class="flex-shrink-0 w-24 bg-zinc-600 flex flex-col items-center justify-center p-2 rounded-l-lg"
     >
@@ -8,7 +8,7 @@
     </div>
     <div class="flex-grow">
       <CardHeader>
-        <CardTitle>{{ report?.username }}</CardTitle>
+        <CardTitle>{{ report.username }}</CardTitle>
         <CardDescription>
           {{
             new Date(report.created_at).toLocaleDateString("en-US", {
@@ -21,7 +21,7 @@
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p>{{ report?.report }}</p>
+        <p>{{ report.report }}</p>
       </CardContent>
     </div>
   </Card>
@@ -33,10 +33,15 @@ const props = defineProps<{
 }>();
 const report = ref<Report>(props.report);
 const user = ref<User>();
+
+const config = useRuntimeConfig();
+const backendUrl = config.public.clientApiUrl;
+
 const { data, error } = await useFetch<string>(
-  `http://localhost:8080/user/${props.report.user_id}`,
+  `${backendUrl}/user/${props.report?.user_id}`,
   {
     method: "GET",
+    server: !!props.report?.user_id,
   }
 );
 if (error.value) {
