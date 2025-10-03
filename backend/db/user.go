@@ -6,7 +6,6 @@ import (
 	"log"
 	"playability/auth"
 	"playability/types"
-	"strconv"
 	"strings"
 
 	"github.com/lib/pq"
@@ -80,11 +79,11 @@ func (m DatabaseModel) InsertUser(user types.UserRegister) error {
 }
 
 // CheckUser verifies user credentials and returns user ID if valid
-func (m DatabaseModel) CheckUser(email string, password string) (string, bool, error) {
+func (m DatabaseModel) CheckUser(email string, password string) (int, bool, error) {
 	// Check if database connection is valid
 	if m.DB == nil {
 		log.Printf("[CheckUser] Database connection is nil")
-		return "", false, errors.New("database connection is nil")
+		return 0, false, errors.New("database connection is nil")
 	}
 
 	var hash string
@@ -101,14 +100,14 @@ func (m DatabaseModel) CheckUser(email string, password string) (string, bool, e
 		} else {
 			log.Printf("[CheckUser] Error querying user by email %s: %v", email, err)
 		}
-		return "", false, nil
+		return 0, false, nil
 	}
 
 	// Check if the provided password matches the stored hash
 	err = auth.CheckPassword(password, hash)
 	if err != nil {
 		log.Printf("[CheckUser] Invalid password for email: %s", email)
-		return "", false, nil
+		return 0, false, nil
 	}
 
 	// Retrieve the user ID
@@ -117,11 +116,11 @@ func (m DatabaseModel) CheckUser(email string, password string) (string, bool, e
 	err = m.DB.QueryRow(idQuery, email).Scan(&id)
 	if err != nil {
 		log.Printf("[CheckUser] Error retrieving user ID for %s: %v", email, err)
-		return "", false, err
+		return 0, false, err
 	}
 
 	log.Printf("[CheckUser] Successful login for user ID: %d", id)
-	return strconv.Itoa(id), true, nil
+	return id, true, nil
 }
 
 // QueryUser retrieves user information from the database

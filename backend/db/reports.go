@@ -40,9 +40,15 @@ func (m *DatabaseModel) InsertReport(report *types.ReportRow) error {
 		log.Printf("[InsertReport] Report already exists for game ID %d by user ID %d (report ID: %d)", report.GameID, report.UserID, existingID)
 		return errors.New("report already exists")
 	}
-
+	//Update user number of reports by one
+	query := ` UPDATE users SET num_reports = num_reports + 1 WHERE id = $1`
+	_, err = m.DB.Exec(query, report.UserID)
+	if err != nil {
+		log.Printf("[InsertReport] Error updating num reports by user ID %d: %v", report.UserID, err)
+		return fmt.Errorf("error updating num reports by user id: %w", err)
+	}
 	// Insert the new report
-	query := `
+	query = `
 	INSERT INTO reports (game_id, user_id, closed_captions, color_blind, full_controller_support, controller_remapping, score, report)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	RETURNING id
@@ -54,7 +60,7 @@ func (m *DatabaseModel) InsertReport(report *types.ReportRow) error {
 		return fmt.Errorf("error inserting report: %w", err)
 	}
 
-	log.Printf("[InsertReport] Successfully inserted report ID %d for game ID %d by user ID %d (score: %s)", reportID, report.GameID, report.UserID, report.Score)
+	log.Printf("[InsertReport] Successfully inserted report ID %d for game ID %d by user ID %d (score: %i)", reportID, report.GameID, report.UserID, report.Score)
 	return nil
 }
 

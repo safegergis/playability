@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig(event);
     const backendUrl = config.apiUrl;
 
-    const res = await $fetch<{ token: string }>(`${backendUrl}/user/login`, {
+    const res = await $fetch<LoginResponse>(`${backendUrl}/user/login`, {
         method: "POST",
         body: body,
     }).catch((error) => {
@@ -24,5 +24,5 @@ export default defineEventHandler(async (event) => {
         expires: new Date(Date.now() + 86400 * 1000),
     });
 
-    return { success: true };
+    return { success: true, user: res.user };
 });

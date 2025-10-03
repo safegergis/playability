@@ -9,6 +9,7 @@ export default defineNuxtConfig({
         "@nuxt/icon",
         "@nuxt/image",
         "@vee-validate/nuxt",
+        "@pinia/nuxt",
     ],
 
     runtimeConfig: {

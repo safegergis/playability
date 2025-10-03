@@ -58,6 +58,15 @@ type UserRow struct {
 	Hash         string `json:"hash"`
 	NumOfReports int    `json:"num_of_reports"`
 }
+type UserInfo struct {
+	ID           int    `json:"id"`
+	Username     string `json:"username"`
+	NumOfReports int    `json:"num_of_reports"`
+}
+type LoginResponse struct {
+	Token string   `json:"token"`
+	User  UserInfo `json:"user"`
+}
 type ReportRegister struct {
 	GameID                int    `json:"game_id"`
 	UserID                int    `json:"user_id"`

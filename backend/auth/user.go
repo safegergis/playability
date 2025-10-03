@@ -35,7 +35,7 @@ func CheckPassword(password string, hash string) error {
 }
 
 // CreateToken generates a new JWT token for a user
-func CreateToken(userid string) (string, error) {
+func CreateToken(userid int) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		log.Fatal("JWT_SECRET environment variable is not set")

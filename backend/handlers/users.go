@@ -101,16 +101,34 @@ func (env *Env) PostLoginUser(w http.ResponseWriter, r *http.Request) {
 	// Create a JWT token for the authenticated user
 	token, err := auth.CreateToken(id)
 	if err != nil {
-		log.Printf("[PostLoginUser] Error creating token for user ID %s: %v", id, err)
+		log.Printf("[PostLoginUser] Error creating token for user ID %d: %v", id, err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
+	// create a UserInfo struct to pass to frontend for ui purposes
+	userRow, err := env.DB.QueryUser(id)
+	if err != nil {
+
+		log.Printf("[PostLoginUser] Error querying for user info %d: %v", id, err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	userInfo := types.UserInfo{
+		ID:           userRow.ID,
+		Username:     userRow.Username,
+		NumOfReports: userRow.NumOfReports,
+	}
+
+	loginResponse := types.LoginResponse{
+		Token: token,
+		User:  userInfo,
+	}
 	// Return the token to the client
-	log.Printf("[PostLoginUser] Successfully authenticated user ID: %s", id)
+	log.Printf("[PostLoginUser] Successfully authenticated user ID: %d", id)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
+	json.NewEncoder(w).Encode(loginResponse)
 }
 
 // GetUserHandler retrieves user information based on the provided ID

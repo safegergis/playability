@@ -29,14 +29,15 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	userID := claims["sub"].(string)
 
-	userIDInt, err := strconv.Atoi(userID)
-	if err != nil {
-		fmt.Println("Error converting user ID to int: ", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	// JWT stores numeric values as float64 by default
+	userIDFloat, ok := claims["sub"].(float64)
+	if !ok {
+		fmt.Println("Error: user ID claim is not a number")
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
+	userIDInt := int(userIDFloat)
 	// Create a ReportRow struct with the report data
 	report := types.ReportRow{
 		GameID:                reportBody.GameID,
