@@ -16,13 +16,15 @@ export default defineEventHandler(async (event) => {
     });
 
     console.log("[login.post] Login successful, setting cookie");
+    console.log("[login.post] JWT token:", res.token);
     setCookie(event, "jwt", res.token, {
         httpOnly: true,
         maxAge: 86400,
         path: "/",
         secure: false, // Set to false for development, true for production
-        expires: new Date(Date.now() + 86400 * 1000),
+        sameSite: "lax",
     });
+    console.log("[login.post] Cookie set, returning response");
 
     return { success: true, user: res.user };
 });

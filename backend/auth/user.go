@@ -3,6 +3,7 @@ package auth
 import (
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/jwtauth/v5"
@@ -40,8 +41,9 @@ func CreateToken(userid int) (string, error) {
 	if secret == "" {
 		log.Fatal("JWT_SECRET environment variable is not set")
 	}
+	userIDString := strconv.Itoa(userid)
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": userid,
+		"sub": userIDString,
 		"iss": "playability",
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 		"iat": time.Now().Unix(),

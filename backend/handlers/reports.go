@@ -23,25 +23,31 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Extract user ID from JWT claims
-	_, claims, err := jwtauth.FromContext(r.Context())
+	token, claims, err := jwtauth.FromContext(r.Context())
 	if err != nil {
-		fmt.Println("Error getting claims: ", err)
+		fmt.Println("[PostReportHandler] Error getting claims: ", err)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
-	// JWT stores numeric values as float64 by default
-	userIDFloat, ok := claims["sub"].(float64)
-	if !ok {
-		fmt.Println("Error: user ID claim is not a number")
-		http.Error(w, "Invalid token", http.StatusUnauthorized)
+	if token == nil {
+		fmt.Println("[PostReportHandler] Token is nil")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	userIDInt := int(userIDFloat)
+	fmt.Printf("[PostReportHandler] Token: %+v, Claims: %+v\n", token, claims)
+
+	// Extract user ID from claims (stored as string)
+	userIDStr := claims["sub"].(string)
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		fmt.Println("[PostReportHandler] Error converting user ID: ", err)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	// Create a ReportRow struct with the report data
 	report := types.ReportRow{
 		GameID:                reportBody.GameID,
-		UserID:                userIDInt,
+		UserID:                userID,
 		ClosedCaptions:        reportBody.ClosedCaptions,
 		ColorBlind:            reportBody.ColorBlind,
 		FullControllerSupport: reportBody.FullControllerSupport,
