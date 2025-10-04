@@ -1,14 +1,15 @@
 <template>
   <div
     v-if="score"
-    class="group relative flex flex-col items-center justify-center shadow-2xl size-32 p-3 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-scale-in"
+    class="group relative flex flex-col items-center justify-center shadow-2xl size-32 p-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-scale-in"
     :class="badgeClasses"
+    :style="{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }"
     role="status"
     :aria-label="`Accessibility score: ${scoreLabel} - ${score} out of 10`"
   >
     <!-- Glow effect -->
     <div
-      class="absolute inset-0 rounded-2xl blur-xl opacity-40 transition-opacity duration-300 group-hover:opacity-60"
+      class="absolute inset-0 blur-xl opacity-40 transition-opacity duration-300 group-hover:opacity-60"
       :class="glowClasses"
     />
 
