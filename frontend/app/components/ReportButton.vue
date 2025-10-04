@@ -2,18 +2,24 @@
     <div>
         <Dialog v-model:open="open">
             <DialogTrigger as-child>
-                <Button variant="outline" class="dark">
+                <Button variant="outline"
+                    class="dark transition-all duration-200 hover:scale-105 hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                    <Icon name="lucide:file-text" class="w-4 h-4 mr-2" aria-hidden="true" />
                     Submit Accessibility Report
                 </Button>
             </DialogTrigger>
-            <DialogContent class="bg-primary text-primary-foreground border-primary sm:max-w-[625px]">
+            <DialogContent
+                class="bg-card dark text-card-foreground border-border sm:max-w-[625px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Submit Accessibility Report</DialogTitle>
-                    <DialogDescription>
-                        Please provide information about the game's accessibility features.
+                    <DialogTitle class="text-2xl font-bold flex items-center gap-2">
+                        <Icon name="lucide:clipboard-pen" class="w-6 h-6 text-primary" aria-hidden="true" />
+                        Submit Accessibility Report
+                    </DialogTitle>
+                    <DialogDescription class="text-muted-foreground">
+                        Please provide information about the game's accessibility features to help others.
                     </DialogDescription>
                 </DialogHeader>
-                <form @submit.prevent="onSubmit">
+                <form @submit.prevent="onSubmit" class="space-y-4">
                     <div class="p-1">
                         <FormField v-slot="{ componentField }" name="colorBlind">
                             <FormItem>
@@ -154,11 +160,23 @@
                         </FormField>
                     </div>
 
-                    <DialogFooter>
-                        <p v-if="uniqueReport" class="text-left mt-2 text-red-500">
-                            You have already submitted a report for this game
-                        </p>
-                        <Button type="submit">Submit Report</Button>
+                    <DialogFooter class="flex-col sm:flex-row gap-3">
+                        <div v-if="uniqueReport" role="alert" aria-live="assertive"
+                            class="flex items-center gap-2 text-destructive text-sm animate-shake">
+                            <Icon name="lucide:alert-circle" class="w-4 h-4" aria-hidden="true" />
+                            <span>You have already submitted a report for this game</span>
+                        </div>
+                        <Button type="submit" :disabled="isSubmitting" :aria-busy="isSubmitting"
+                            class="transition-all dark duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                            <span v-if="!isSubmitting" class="flex items-center gap-2">
+                                <Icon name="lucide:send" class="w-4 h-4" aria-hidden="true" />
+                                Submit Report
+                            </span>
+                            <span v-else class="flex items-center gap-2">
+                                <Icon name="lucide:loader-2" class="w-4 h-4 animate-spin" aria-hidden="true" />
+                                Submitting...
+                            </span>
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -170,9 +188,11 @@
 import { ErrorMessage, useForm } from "vee-validate";
 import * as yup from "yup";
 
-// Ensure you have this or adjust accordingly
+// State management
 const uniqueReport = ref(false);
 const open = ref(false);
+const isSubmitting = ref(false);
+
 const props = defineProps<{
     game: number;
 }>();
@@ -201,6 +221,9 @@ const form = useForm({
 
 // Handle form submission
 const onSubmit = form.handleSubmit(async (values) => {
+    isSubmitting.value = true;
+    uniqueReport.value = false;
+
     console.log("Form Values:", values);
     const reportSubmit = {
         game_id: props.game,
@@ -226,8 +249,13 @@ const onSubmit = form.handleSubmit(async (values) => {
             }
         })
         .then(() => {
-            emit("submit");
-            open.value = false;
+            if (!uniqueReport.value) {
+                emit("submit");
+                open.value = false;
+            }
+        })
+        .finally(() => {
+            isSubmitting.value = false;
         });
 });
 </script>

@@ -1,52 +1,81 @@
 <template>
-  <Card v-if="featureStats" class="dark p-4 rounded-lg">
-    <h2 class="text-xl font-semibold mb-4">Essential Accessibility Features</h2>
-    <div class="grid grid-cols-2 md:grid-cols-2 gap-4">
-      <div class="bg-zinc-700 p-4 rounded-lg">
-        <h3 class="text-lg font-medium mb-2">Colorblind Mode</h3>
-        <p class="text-gray-300">
+  <Card v-if="featureStats" class="dark p-6 rounded-xl animate-fade-in">
+    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+      <Icon name="lucide:accessibility" class="w-6 h-6 text-primary" aria-hidden="true" />
+      Essential Accessibility Features
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Colorblind Mode -->
+      <div
+        class="group bg-card/50 border border-border p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/50"
+      >
+        <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Icon name="lucide:palette" class="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
+          Colorblind Mode
+        </h3>
+        <p class="text-muted-foreground font-medium mb-1">
           {{ parseConsensus(featureStats[0].consensus) }}
         </p>
         <p
           v-if="ifSecondaryConsensus(featureStats[0].secondary_consensus)"
-          class="text-gray-300 text-sm"
+          class="text-muted-foreground/80 text-sm"
         >
           {{ parseSecondaryConsensus(featureStats[0]) }}
         </p>
       </div>
-      <div class="bg-zinc-700 p-4 rounded-lg">
-        <h3 class="text-lg font-medium mb-2">Closed Captions</h3>
-        <p class="text-gray-300">
+
+      <!-- Closed Captions -->
+      <div
+        class="group bg-card/50 border border-border p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/50"
+      >
+        <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Icon name="lucide:closed-captioning" class="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
+          Closed Captions
+        </h3>
+        <p class="text-muted-foreground font-medium mb-1">
           {{ parseConsensus(featureStats[1].consensus) }}
         </p>
         <p
           v-if="ifSecondaryConsensus(featureStats[1].secondary_consensus)"
-          class="text-gray-300 text-sm"
+          class="text-muted-foreground/80 text-sm"
         >
           {{ parseSecondaryConsensus(featureStats[1]) }}
         </p>
       </div>
-      <div class="bg-zinc-700 p-4 rounded-lg">
-        <h3 class="text-lg font-medium mb-2">Controller Support</h3>
-        <p class="text-gray-300">
+
+      <!-- Controller Support -->
+      <div
+        class="group bg-card/50 border border-border p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/50"
+      >
+        <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Icon name="lucide:gamepad-2" class="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
+          Controller Support
+        </h3>
+        <p class="text-muted-foreground font-medium mb-1">
           {{ parseConsensus(featureStats[2].consensus) }}
         </p>
         <p
           v-if="ifSecondaryConsensus(featureStats[2].secondary_consensus)"
-          class="text-gray-300 text-sm"
+          class="text-muted-foreground/80 text-sm"
         >
           {{ parseSecondaryConsensus(featureStats[2]) }}
         </p>
       </div>
-      <div class="bg-zinc-700 p-4 rounded-lg">
-        <h3 class="text-lg font-medium mb-2">Full Controller Remapping</h3>
-        <p class="text-gray-300">
+
+      <!-- Full Controller Remapping -->
+      <div
+        class="group bg-card/50 border border-border p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/50"
+      >
+        <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Icon name="lucide:settings" class="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
+          Full Controller Remapping
+        </h3>
+        <p class="text-muted-foreground font-medium mb-1">
           {{ parseConsensus(featureStats[3].consensus) }}
         </p>
-
         <p
           v-if="ifSecondaryConsensus(featureStats[3].secondary_consensus)"
-          class="text-gray-300 text-sm"
+          class="text-muted-foreground/80 text-sm"
         >
           {{ parseSecondaryConsensus(featureStats[3]) }}
         </p>
@@ -54,31 +83,60 @@
     </div>
   </Card>
 
-  <Card v-else class="dark p-4 rounded-lg:">
-    <h2 class="text-xl font-semibold mb-4">Essential Accessibility Features</h2>
-
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-zinc-700 p-4 rounded-lg">
-        <h3 class="text-lg font-medium mb-2">Colorblind Mode</h3>
-        <p class="text-gray-300">
+  <Card v-else class="dark p-6 rounded-xl animate-fade-in">
+    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+      <Icon name="lucide:accessibility" class="w-6 h-6 text-primary" aria-hidden="true" />
+      Essential Accessibility Features
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Colorblind Mode -->
+      <div
+        class="group bg-card/50 border border-border p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/50"
+      >
+        <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Icon name="lucide:palette" class="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
+          Colorblind Mode
+        </h3>
+        <p class="text-muted-foreground font-medium">
           {{ parseConsensus(game.color_blind || "unknown") }}
         </p>
       </div>
-      <div class="bg-zinc-700 p-4 rounded-lg">
-        <h3 class="text-lg font-medium mb-2">Closed Captions</h3>
-        <p class="text-gray-300">
+
+      <!-- Closed Captions -->
+      <div
+        class="group bg-card/50 border border-border p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/50"
+      >
+        <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Icon name="lucide:closed-captioning" class="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
+          Closed Captions
+        </h3>
+        <p class="text-muted-foreground font-medium">
           {{ parseConsensus(game.closed_captions || "unknown") }}
         </p>
       </div>
-      <div class="bg-zinc-700 p-4 rounded-lg">
-        <h3 class="text-lg font-medium mb-2">Controller Support</h3>
-        <p class="text-gray-300">
+
+      <!-- Controller Support -->
+      <div
+        class="group bg-card/50 border border-border p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/50"
+      >
+        <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Icon name="lucide:gamepad-2" class="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
+          Controller Support
+        </h3>
+        <p class="text-muted-foreground font-medium">
           {{ parseConsensus(game.full_controller_support || "unknown") }}
         </p>
       </div>
-      <div class="bg-zinc-700 p-4 rounded-lg">
-        <h3 class="text-lg font-medium mb-2">Full Controller Remapping</h3>
-        <p class="text-gray-300">
+
+      <!-- Full Controller Remapping -->
+      <div
+        class="group bg-card/50 border border-border p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/50"
+      >
+        <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Icon name="lucide:settings" class="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
+          Full Controller Remapping
+        </h3>
+        <p class="text-muted-foreground font-medium">
           {{ parseConsensus(game.controller_remapping || "unknown") }}
         </p>
       </div>
