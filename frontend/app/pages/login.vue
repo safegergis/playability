@@ -81,23 +81,19 @@ const form = useForm({
 
 // Handle form submission
 const onSubmit = form.handleSubmit(async (values) => {
-  const { data, error } = await useAsyncData("login", () =>
-    $fetch("/api/auth/login", {
-      method: "POST",
-      body: values,
-    })
-  );
-  // Check if the error is a 401
-  if (error.value && error.value.statusCode !== 401) {
-    //if not 401 then show error
+  const { data, error, execute } = await useFetch("/api/auth/login", {
+    method: "POST",
+    body: values,
+    immediate: true,
+  });
+
+  if (error.value?.statusCode === 401) {
+    console.log("error.message", error.value.data);
+    InvalidLogin.value = true;
+  } else if (error.value) {
     console.log(error.value);
     console.error("Login error:", error.value);
-  } else if (error.value && error.value.statusCode === 401) {
-    //if 401 then show invalid login
-    console.log("error.value.message", error.value.data);
-    InvalidLogin.value = true;
   } else {
-    //success
     console.log("Login successful! ", data.value);
     authStore.logUserIn(data.value!.user);
     navigateTo("/");
