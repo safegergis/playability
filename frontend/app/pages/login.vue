@@ -42,12 +42,10 @@
                     />
                   </div>
                 </FormControl>
-                <ErrorMessage name="email" class="text-sm text-destructive flex items-center gap-1 mt-1 animate-shake" id="email-error" role="alert">
-                  <template #default="{ message }">
-                    <Icon name="lucide:alert-circle" class="w-3 h-3 flex-shrink-0" aria-hidden="true" />
-                    <span>{{ message }}</span>
-                  </template>
-                </ErrorMessage>
+                <div v-if="form.errors.value.email" class="inline-flex items-center gap-1 text-sm text-destructive mt-1 animate-shake" id="email-error" role="alert">
+                  <Icon name="lucide:alert-circle" class="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                  <span>{{ form.errors.value.email }}</span>
+                </div>
               </FormItem>
             </FormField>
 
@@ -74,12 +72,10 @@
                     />
                   </div>
                 </FormControl>
-                <ErrorMessage name="password" class="text-sm text-destructive flex items-center gap-1 mt-1 animate-shake" id="password-error" role="alert">
-                  <template #default="{ message }">
-                    <Icon name="lucide:alert-circle" class="w-3 h-3 flex-shrink-0" aria-hidden="true" />
-                    <span>{{ message }}</span>
-                  </template>
-                </ErrorMessage>
+                <div v-if="form.errors.value.password" class="inline-flex items-center gap-1 text-sm text-destructive mt-1 animate-shake" id="password-error" role="alert">
+                  <Icon name="lucide:alert-circle" class="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                  <span>{{ form.errors.value.password }}</span>
+                </div>
               </FormItem>
             </FormField>
 
@@ -147,7 +143,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ErrorMessage, useForm } from "vee-validate";
+import { useForm } from "vee-validate";
 import * as yup from "yup";
 
 // SEO metadata
@@ -194,7 +190,6 @@ const onSubmit = form.handleSubmit(async (values) => {
       body: values,
       immediate: true,
     });
-
     if (error.value?.statusCode === 401) {
       InvalidLogin.value = true;
     } else if (error.value) {
