@@ -67,34 +67,46 @@ type LoginResponse struct {
 	Token string   `json:"token"`
 	User  UserInfo `json:"user"`
 }
+type ReportPlatform int
+
+const (
+	Playstation ReportPlatform = 49
+	Xbox        ReportPlatform = 169
+	PC          ReportPlatform = 6
+	Nintendo    ReportPlatform = 130
+)
+
 type ReportRegister struct {
-	GameID                int    `json:"game_id"`
-	UserID                int    `json:"user_id"`
-	ClosedCaptions        string `json:"closed_captions"`
-	ColorBlind            string `json:"color_blind"`
-	FullControllerSupport string `json:"full_controller_support"`
-	ControllerRemapping   string `json:"controller_remapping"`
-	Score                 int    `json:"score"`
-	Report                string `json:"report"`
+	GameID                int            `json:"game_id"`
+	UserID                int            `json:"user_id"`
+	Platform              ReportPlatform `json:"platform"`
+	ClosedCaptions        string         `json:"closed_captions"`
+	ColorBlind            string         `json:"color_blind"`
+	FullControllerSupport string         `json:"full_controller_support"`
+	ControllerRemapping   string         `json:"controller_remapping"`
+	Score                 int            `json:"score"`
+	Report                string         `json:"report"`
 }
 type ReportRow struct {
-	ID                    int    `json:"id"`
-	GameID                int    `json:"game_id"`
-	UserID                int    `json:"user_id"`
-	ClosedCaptions        string `json:"closed_captions"`
-	ColorBlind            string `json:"color_blind"`
-	FullControllerSupport string `json:"full_controller_support"`
-	ControllerRemapping   string `json:"controller_remapping"`
-	Score                 int    `json:"score"`
-	Report                string `json:"report"`
+	ID                    int            `json:"id"`
+	GameID                int            `json:"game_id"`
+	UserID                int            `json:"user_id"`
+	Platform              ReportPlatform `json:"platform"`
+	ClosedCaptions        string         `json:"closed_captions"`
+	ColorBlind            string         `json:"color_blind"`
+	FullControllerSupport string         `json:"full_controller_support"`
+	ControllerRemapping   string         `json:"controller_remapping"`
+	Score                 int            `json:"score"`
+	Report                string         `json:"report"`
 }
 type ReportCards struct {
-	ID        int       `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	GameID    int       `json:"game_id"`
-	UserID    int       `json:"user_id"`
-	Score     int       `json:"score"`
-	Report    string    `json:"report"`
+	ID        int            `json:"id"`
+	CreatedAt time.Time      `json:"created_at"`
+	GameID    int            `json:"game_id"`
+	UserID    int            `json:"user_id"`
+	Platform  ReportPlatform `json:"platform"`
+	Score     int            `json:"score"`
+	Report    string         `json:"report"`
 }
 type FeatureReport struct {
 	ID                    int    `json:"id"`

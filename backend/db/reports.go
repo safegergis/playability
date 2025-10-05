@@ -49,18 +49,18 @@ func (m *DatabaseModel) InsertReport(report *types.ReportRow) error {
 	}
 	// Insert the new report
 	query = `
-	INSERT INTO reports (game_id, user_id, closed_captions, color_blind, full_controller_support, controller_remapping, score, report)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	INSERT INTO reports (game_id, user_id, platform, closed_captions, color_blind, full_controller_support, controller_remapping, score, report)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	RETURNING id
 	`
 	var reportID int
-	err = m.DB.QueryRow(query, report.GameID, report.UserID, report.ClosedCaptions, report.ColorBlind, report.FullControllerSupport, report.ControllerRemapping, report.Score, report.Report).Scan(&reportID)
+	err = m.DB.QueryRow(query, report.GameID, report.UserID, report.Platform, report.ClosedCaptions, report.ColorBlind, report.FullControllerSupport, report.ControllerRemapping, report.Score, report.Report).Scan(&reportID)
 	if err != nil {
 		log.Printf("[InsertReport] Error inserting report for game ID %d by user ID %d: %v", report.GameID, report.UserID, err)
 		return fmt.Errorf("error inserting report: %w", err)
 	}
 
-	log.Printf("[InsertReport] Successfully inserted report ID %d for game ID %d by user ID %d (score: %i)", reportID, report.GameID, report.UserID, report.Score)
+	log.Printf("[InsertReport] Successfully inserted report ID %d for game ID %d by user ID %d (score: %d)", reportID, report.GameID, report.UserID, report.Score)
 	return nil
 }
 
@@ -75,7 +75,7 @@ func (m *DatabaseModel) QueryReportCards(id int) ([]types.ReportCards, error) {
 	log.Printf("[QueryReportCards] Querying report cards for game ID: %d", id)
 
 	// Query the database for reports
-	query := `SELECT id, created_at, game_id, user_id, score, report FROM reports WHERE game_id = $1 ORDER BY created_at DESC`
+	query := `SELECT id, created_at, game_id, user_id, platform, score, report FROM reports WHERE game_id = $1 ORDER BY created_at DESC`
 	rows, err := m.DB.Query(query, id)
 	if err != nil {
 		log.Printf("[QueryReportCards] Error querying reports for game ID %d: %v", id, err)

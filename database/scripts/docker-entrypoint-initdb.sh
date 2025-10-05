@@ -57,6 +57,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         game_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
+        platform integer NOT NULL,
         closed_captions feature_support NOT NULL,
         color_blind feature_support NOT NULL,
         full_controller_support feature_support NOT NULL,

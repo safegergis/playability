@@ -48,6 +48,7 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 	report := types.ReportRow{
 		GameID:                reportBody.GameID,
 		UserID:                userID,
+		Platform:              reportBody.Platform,
 		ClosedCaptions:        reportBody.ClosedCaptions,
 		ColorBlind:            reportBody.ColorBlind,
 		FullControllerSupport: reportBody.FullControllerSupport,
@@ -55,6 +56,7 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 		Report:                reportBody.Report,
 		Score:                 reportBody.Score,
 	}
+	//TODO: Change this to a queue system to prevent failed requests from killing system
 
 	moderationResponse, err := ai.Moderation(&report)
 	if err != nil {

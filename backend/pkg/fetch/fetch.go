@@ -18,7 +18,7 @@ func GetSearch(searchTerm string) ([]byte, error) {
 		return nil, fmt.Errorf("IGDB_ACCESS_TOKEN environment variable is not set")
 	}
 
-	postBody := fmt.Sprintf("fields id,name;where platforms = (167,168,48,49,6,130) & category = (0,8,9); search \"%s\"; limit 50;", searchTerm)
+	postBody := fmt.Sprintf("fields id,name;where platforms = (167,169,48,49,6,130) & game_type = (0,8,9) & where version_parent = null; search \"%s\"; limit 50;", searchTerm)
 	log.Printf("[GetSearch] Searching for: %s", searchTerm)
 
 	body, err := makeIgdbRequest(postBody, igdbSecret, "games")
@@ -60,7 +60,7 @@ func GetGame(gameID string) ([]byte, error) {
 	game := games[0]
 	log.Printf("[GetGame] Found game: %s (ID: %d)", game.Name, game.ID)
 	// Fetch steamID details
-	postBody = fmt.Sprintf("fields uid; where game = %d & category = 1;", game.ID)
+	postBody = fmt.Sprintf("fields uid; where game = %d & external_game_source = 1;", game.ID)
 	body, err = makeIgdbRequest(postBody, igdbSecret, "external_games")
 	if err != nil {
 		log.Printf("[GetGame] Error fetching external games for game ID %d: %v", game.ID, err)

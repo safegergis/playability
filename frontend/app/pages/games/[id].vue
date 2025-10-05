@@ -111,7 +111,7 @@ const platformDefinitions = [
     { id: 6, name: "PC", icon: "mdi:steam" },
     { id: 130, name: "Nintendo Switch", icon: "mdi:nintendo-switch" },
     { id: 167, name: "Playstation 5", icon: "mdi:sony-playstation" },
-    { id: 168, name: "Xbox Series X", icon: "mdi:microsoft-xbox" },
+    { id: 169, name: "Xbox Series X", icon: "mdi:microsoft-xbox" },
 ];
 
 const route = useRoute();
