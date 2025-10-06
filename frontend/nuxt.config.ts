@@ -46,5 +46,15 @@ export default defineNuxtConfig({
         plugins: [
             tailwindcss()
         ],
+        lib: {
+            rollupOptions: {
+                external: ["vue"],
+                output: {
+                    globals: {
+                        vue: "Vue",
+                    },
+                },
+            },
+        }
     },
 });
