@@ -276,7 +276,8 @@ const onSubmit = form.handleSubmit(async (values) => {
                 //TODO: Error response goes here
             }
         } else {
-            await navigateTo("/login");
+            // Redirect to email verification page
+            await navigateTo(`/verify-email?email=${encodeURIComponent(values.email)}`);
         }
     } finally {
         isSubmitting.value = false;

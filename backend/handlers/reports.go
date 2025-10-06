@@ -163,7 +163,7 @@ func (env *Env) GetReportSummaryHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if summary == nil {
+	if summary.Summary == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{"message": "No summary available"})
@@ -173,4 +173,44 @@ func (env *Env) GetReportSummaryHandler(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(summary)
+}
+
+// GetUserReportsHandler retrieves all reports submitted by a specific user (requires authentication)
+func (env *Env) GetUserReportsHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract user ID from JWT claims
+	_, claims, err := jwtauth.FromContext(r.Context())
+	if err != nil {
+		log.Println("[GetUserReportsHandler] Error getting claims: ", err)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Extract user ID from claims (stored as string)
+	userIDStr, ok := claims["sub"].(string)
+	if !ok {
+		log.Println("[GetUserReportsHandler] Error: user ID not found in claims")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		log.Println("[GetUserReportsHandler] Error converting user ID to int: ", err)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	log.Printf("[GetUserReportsHandler] Fetching reports for user ID: %d", userID)
+
+	// Query user reports from database
+	reports, err := env.DB.QueryUserReports(userID)
+	if err != nil {
+		log.Println("[GetUserReportsHandler] Error getting user reports: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(reports)
 }

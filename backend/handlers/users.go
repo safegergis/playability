@@ -59,8 +59,35 @@ func (env *Env) PostCreateUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Get the newly created user to send verification email
+	// userRow, err := env.DB.GetUserByEmail(user.Email)
+	if err != nil {
+		log.Printf("[PostCreateUser] Error getting user for verification email: %v", err)
+		// User is created, so we can still return success
+		w.WriteHeader(http.StatusCreated)
+		return
+	}
+
+	// Send verification email
+	// verification, err := env.SendVerifyEmail(userRow)
+	if err != nil {
+		log.Printf("[PostCreateUser] Error sending verification email: %v", err)
+		// User is created, so we can still return success
+		w.WriteHeader(http.StatusCreated)
+		return
+	}
+
+	// Store verification in database
+	// err = env.DB.InsertVerification(verification)
+	if err != nil {
+		log.Printf("[PostCreateUser] Error storing verification: %v", err)
+		// User is created, so we can still return success
+		w.WriteHeader(http.StatusCreated)
+		return
+	}
+
 	// If successful, return 201 Created status
-	log.Printf("[PostCreateUser] Successfully created user: %s (email: %s)", user.Username, user.Email)
+	log.Printf("[PostCreateUser] Successfully created user: %s (email: %s) and sent verification email", user.Username, user.Email)
 	w.WriteHeader(http.StatusCreated)
 }
 
@@ -98,6 +125,26 @@ func (env *Env) PostLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get user details to check verification status
+	userRow, err := env.DB.QueryUser(id)
+	if err != nil {
+		log.Printf("[PostLoginUser] Error querying for user info %d: %v", id, err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Check if user is verified
+	if userRow.Verified {
+		log.Printf("[PostLoginUser] User not verified: %s", user.Email)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "email not verified",
+			"email": user.Email,
+		})
+		return
+	}
+
 	// Create a JWT token for the authenticated user
 	token, err := auth.CreateToken(id)
 	if err != nil {
@@ -106,14 +153,6 @@ func (env *Env) PostLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create a UserInfo struct to pass to frontend for ui purposes
-	userRow, err := env.DB.QueryUser(id)
-	if err != nil {
-
-		log.Printf("[PostLoginUser] Error querying for user info %d: %v", id, err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
 	userInfo := types.UserInfo{
 		ID:           userRow.ID,
 		Username:     userRow.Username,

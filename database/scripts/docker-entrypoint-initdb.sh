@@ -36,16 +36,15 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
-    -- Create verification table
-    CREATE TABLE IF NOT EXISTS (
-        email Varchar(100) not null,
-        hash Varchar(10) not null,
-        expiresat Timestamp not null,
-        type Varchar(10) not null,
-        Primary Key (email),
-		Constraint fk_user_email Foreign Key(email) References users(email)
-			On Delete Cascade On Update Cascade
-    )
+    -- Create verifications table
+    CREATE TABLE IF NOT EXISTS verifications (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        code VARCHAR(255) NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        type INTEGER NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
 
     -- Create games table
     CREATE TABLE IF NOT EXISTS games (
@@ -94,7 +93,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         summary TEXT NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-    )
+    );
 EOSQL
 echo "✓ Tables created"
 
@@ -159,6 +158,9 @@ echo "Step 4: Creating indexes..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+    CREATE INDEX IF NOT EXISTS idx_users_verified ON users(verified);
+    CREATE INDEX IF NOT EXISTS idx_verifications_email_type ON verifications(email, type);
+    CREATE INDEX IF NOT EXISTS idx_verifications_expires_at ON verifications(expires_at);
     CREATE INDEX IF NOT EXISTS idx_games_name ON games(name);
     CREATE INDEX IF NOT EXISTS idx_reports_game_id_created_at ON reports(game_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id);
@@ -209,9 +211,9 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         applied_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
 
-    -- Mark initial migration as applied
+    -- Mark migrations as applied
     INSERT INTO schema_migrations (version)
-    VALUES ('001_initial_schema')
+    VALUES ('001_initial_schema'), ('002_add_verifications')
     ON CONFLICT (version) DO NOTHING;
 EOSQL
 echo "✓ Migration tracking ready"

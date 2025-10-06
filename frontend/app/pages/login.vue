@@ -52,10 +52,18 @@
             <!-- Password Field -->
             <FormField v-slot="{ componentField }" name="password">
               <FormItem>
-                <FormLabel for="password" class="text-sm font-medium">
-                  Password
-                  <span class="text-destructive ml-1" aria-label="required">*</span>
-                </FormLabel>
+                <div class="flex items-center justify-between">
+                  <FormLabel for="password" class="text-sm font-medium">
+                    Password
+                    <span class="text-destructive ml-1" aria-label="required">*</span>
+                  </FormLabel>
+                  <NuxtLink
+                    to="/forgot-password"
+                    class="text-xs text-primary hover:text-primary/80 underline-offset-4 hover:underline transition-colors"
+                  >
+                    Forgot password?
+                  </NuxtLink>
+                </div>
                 <FormControl>
                   <div class="relative">
                     <Icon name="lucide:lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" aria-hidden="true" />
@@ -192,6 +200,10 @@ const onSubmit = form.handleSubmit(async (values) => {
     });
     if (error.value?.statusCode === 401) {
       InvalidLogin.value = true;
+    } else if (error.value?.statusCode === 403) {
+      // User not verified - redirect to verification page
+      const email = values.email;
+      await navigateTo(`/verify-email?email=${encodeURIComponent(email)}`);
     } else if (error.value) {
       console.error("Login error:", error.value);
       InvalidLogin.value = true;

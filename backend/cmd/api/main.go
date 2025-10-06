@@ -7,10 +7,12 @@ import (
 	"playability/db"
 	"playability/handlers"
 	"playability/pkg/mail"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/hashicorp/go-hclog"
 	_ "github.com/lib/pq"
@@ -26,7 +28,12 @@ type Env struct {
 // MountMiddleware sets up middleware for the application
 func (env *Env) MountMiddleware() {
 	// Add logging middleware
+	env.router.Use(middleware.RequestID)
+	env.router.Use(middleware.RealIP)
 	env.router.Use(middleware.Logger)
+	env.router.Use(middleware.Recoverer)
+	env.router.Use(httprate.LimitByIP(100, time.Minute))
+	env.router.Use(middleware.Timeout(60 * time.Second))
 	// Add CORS middleware with specific options
 	env.router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -59,12 +66,19 @@ func (env *Env) MountHandlers() {
 		// Commented out route for getting user reports
 		// r.Get("/reports/{id}", env.handlers.GetReportHandler)
 
+		// Verification routes
+		r.Post("/verify-email", env.handlers.PostVerifyEmail)
+		r.Post("/resend-verification", env.handlers.PostResendVerification)
+		r.Post("/request-password-reset", env.handlers.PostRequestPasswordReset)
+		r.Post("/reset-password", env.handlers.PostResetPassword)
+
 		// Group of routes that require JWT authentication
 		r.Group(func(r chi.Router) {
 			r.Use(jwtauth.Verifier(env.authtoken))
 			r.Use(jwtauth.Authenticator(env.authtoken))
 
 			r.Post("/report", env.handlers.PostReportHandler)
+			r.Get("/my-reports", env.handlers.GetUserReportsHandler)
 		})
 	})
 }
