@@ -255,7 +255,7 @@ func (m *DatabaseModel) QueryReportSummary(gameID int) (types.ReportSummaryRow, 
 	return summary, nil
 }
 
-// QueryUserReports retrieves all reports submitted by a specific user
+// QueryUserReports retrieves all reports submitted by a specific user with game details
 func (m *DatabaseModel) QueryUserReports(userID int) ([]types.ReportCards, error) {
 	// Check if the database connection is valid
 	if m.DB == nil {
@@ -265,8 +265,23 @@ func (m *DatabaseModel) QueryUserReports(userID int) ([]types.ReportCards, error
 
 	log.Printf("[QueryUserReports] Querying reports for user ID: %d", userID)
 
-	// Query the database for reports by user
-	query := `SELECT id, created_at, game_id, user_id, platform, score, report FROM reports WHERE user_id = $1 ORDER BY created_at DESC`
+	// Query the database for reports by user, joining with games table to get game details
+	query := `
+		SELECT
+			r.id,
+			r.created_at,
+			r.game_id,
+			COALESCE(g.name, 'Unknown Game') as game_name,
+			COALESCE(g.cover_art, '') as cover_art,
+			r.user_id,
+			r.platform,
+			r.score,
+			r.report
+		FROM reports r
+		LEFT JOIN games g ON r.game_id = g.id
+		WHERE r.user_id = $1
+		ORDER BY r.created_at DESC`
+
 	rows, err := m.DB.Query(query, userID)
 	if err != nil {
 		log.Printf("[QueryUserReports] Error querying reports for user ID %d: %v", userID, err)
@@ -278,7 +293,7 @@ func (m *DatabaseModel) QueryUserReports(userID int) ([]types.ReportCards, error
 	var reports []types.ReportCards
 	for rows.Next() {
 		var report types.ReportCards
-		err := rows.Scan(&report.ID, &report.CreatedAt, &report.GameID, &report.UserID, &report.Platform, &report.Score, &report.Report)
+		err := rows.Scan(&report.ID, &report.CreatedAt, &report.GameID, &report.GameName, &report.CoverArt, &report.UserID, &report.Platform, &report.Score, &report.Report)
 		if err != nil {
 			log.Printf("[QueryUserReports] Error scanning report row for user ID %d: %v", userID, err)
 			return nil, fmt.Errorf("error scanning report: %w", err)

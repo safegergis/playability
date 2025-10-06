@@ -134,6 +134,8 @@ type ReportCards struct {
 	ID        int            `json:"id"`
 	CreatedAt time.Time      `json:"created_at"`
 	GameID    int            `json:"game_id"`
+	GameName  string         `json:"game_name"`
+	CoverArt  string         `json:"cover_art"`
 	UserID    int            `json:"user_id"`
 	Platform  ReportPlatform `json:"platform"`
 	Score     int            `json:"score"`
