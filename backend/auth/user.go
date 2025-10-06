@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"log"
 	"os"
 	"strconv"
@@ -53,4 +55,13 @@ func CreateToken(userid int) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+// GenerateRandomString creates a cryptographically secure random string of the specified length
+func GenerateRandomString(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(bytes)[:length], nil
 }

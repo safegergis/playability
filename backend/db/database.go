@@ -1,10 +1,10 @@
 package db
 
-import (
+import ( 
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
+	"os" 
 )
 
 // Database connection constants

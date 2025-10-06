@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"playability/pkg/mail"
 	"time"
 )
 
@@ -59,7 +60,14 @@ type UserRow struct {
 	Username     string `json:"username"`
 	Email        string `json:"email"`
 	Hash         string `json:"hash"`
+	Verified     bool   `json:"verified"`
 	NumOfReports int    `json:"num_of_reports"`
+}
+type VerificationRow struct {
+	Email     string        `json:"email"`
+	Code      string        `json:"code"`
+	ExpiresAt time.Time     `json:"expiresat"`
+	Type      mail.MailType `json:"type"`
 }
 type UserInfo struct {
 	ID           int    `json:"id"`

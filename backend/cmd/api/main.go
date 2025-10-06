@@ -1,16 +1,18 @@
 package main
 
 import (
-	"os"
 	"net/http"
+	"os"
 	"playability/auth"
 	"playability/db"
 	"playability/handlers"
+	"playability/pkg/mail"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/hashicorp/go-hclog"
 	_ "github.com/lib/pq"
 )
 
@@ -72,12 +74,17 @@ func main() {
 	database := db.InitDB()
 	// Generate the authentication token
 	authtoken := auth.GenerateAuthToken()
-
+	mailServiceLogger := hclog.New(&hclog.LoggerOptions{
+		Name:  "MailServiceLogger",
+		Level: hclog.Debug,
+	})
+	mail := mail.NewMSMailService(mailServiceLogger, os.Getenv("MAIL_SENDER_API"))
 	// Set up the application environment
 	env := &Env{
 		router: chi.NewRouter(),
 		handlers: &handlers.Env{
 			DB: db.DatabaseModel{DB: database},
+			MS: mail,
 		},
 		authtoken: authtoken,
 	}
@@ -87,5 +94,5 @@ func main() {
 	env.MountHandlers()
 
 	// Start the server on port 8080
-	http.ListenAndServe(":" + os.Getenv("BACKEND_PORT"), env.router)
+	http.ListenAndServe(":"+os.Getenv("BACKEND_PORT"), env.router)
 }

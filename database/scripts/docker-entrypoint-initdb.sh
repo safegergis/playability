@@ -31,10 +31,21 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         username VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
         hash VARCHAR(255) NOT NULL,
+        verified BOOLEAN NOT NULL DEFAULT false,
         num_reports INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
+    -- Create verification table
+    CREATE TABLE IF NOT EXISTS (
+        email Varchar(100) not null,
+        hash Varchar(10) not null,
+        expiresat Timestamp not null,
+        type Varchar(10) not null,
+        Primary Key (email),
+		Constraint fk_user_email Foreign Key(email) References users(email)
+			On Delete Cascade On Update Cascade
+    )
 
     -- Create games table
     CREATE TABLE IF NOT EXISTS games (
