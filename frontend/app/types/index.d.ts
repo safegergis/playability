@@ -48,6 +48,7 @@ declare global {
         created_at: string;
         game_id: string;
         user_id: string;
+        platform: number;
         score: number;
         report: string;
         username?: string;
@@ -73,6 +74,11 @@ declare global {
         game_id: number;
         name: string;
         cover_art: string;
+    }
+    interface ReportSummary {
+        id: number;
+        game_id: number;
+        summary: string;
     }
 }
 

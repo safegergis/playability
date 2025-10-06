@@ -84,6 +84,40 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 			} else {
 				fmt.Println("Error inserting report: ", err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// Check if we should generate a summary (every 10th report)
+		count, err := env.DB.GetReportCount(report.GameID)
+		if err != nil {
+			log.Printf("[PostReportHandler] Error getting report count for game ID %d: %v", report.GameID, err)
+			// Don't fail the request, just log the error
+		} else if count%10 == 0 {
+			log.Printf("[PostReportHandler] Generating summary for game ID %d (report count: %d)", report.GameID, count)
+
+			// Get reports for summarization
+			reports, err := env.DB.QueryReportsForSummarization(report.GameID)
+			if err != nil {
+				log.Printf("[PostReportHandler] Error querying reports for summarization: %v", err)
+			} else {
+				// Generate summary using AI
+				summary, err := ai.SummarizeReports(reports)
+				if err != nil {
+					log.Printf("[PostReportHandler] Error generating summary: %v", err)
+				} else {
+					// Save summary to database
+					summaryRow := &types.ReportSummaryRow{
+						GameID:  report.GameID,
+						Summary: summary,
+					}
+					err = env.DB.InsertReportSummary(summaryRow)
+					if err != nil {
+						log.Printf("[PostReportHandler] Error saving summary: %v", err)
+					} else {
+						log.Printf("[PostReportHandler] Successfully generated and saved summary for game ID %d", report.GameID)
+					}
+				}
 			}
 		}
 	}
@@ -110,4 +144,33 @@ func (env *Env) GetReportCardsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(reports)
+}
+
+// GetReportSummaryHandler retrieves the AI-generated summary for a specific game
+func (env *Env) GetReportSummaryHandler(w http.ResponseWriter, r *http.Request) {
+	gameID := chi.URLParam(r, "game")
+	gameIDInt, err := strconv.Atoi(gameID)
+	if err != nil {
+		log.Println("[GetReportSummaryHandler] Error converting game ID to int: ", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	summary, err := env.DB.QueryReportSummary(gameIDInt)
+	if err != nil {
+		log.Println("[GetReportSummaryHandler] Error getting report summary: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if summary == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"message": "No summary available"})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(summary)
 }

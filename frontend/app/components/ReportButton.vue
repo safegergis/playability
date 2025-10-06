@@ -20,6 +20,31 @@
                     </DialogDescription>
                 </DialogHeader>
                 <form @submit.prevent="onSubmit" class="space-y-4">
+                    <!-- Platform Field -->
+                    <div class="p-1">
+                        <FormField v-slot="{ componentField }" name="platform">
+                            <FormItem>
+                                <FormLabel for="platform" class="text-right">
+                                    Platform
+                                </FormLabel>
+                                <Select v-bind="componentField" name="platform" class="col-span-3">
+                                    <FormControl>
+                                        <SelectTrigger class="dark">
+                                            <SelectValue placeholder="Select platform" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent class="dark">
+                                        <SelectItem v-for="platform in availablePlatforms" :key="platform.value"
+                                            :value="platform.value">
+                                            {{ platform.label }}
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <ErrorMessage name="platform" class="text-sm text-red-500" />
+                            </FormItem>
+                        </FormField>
+                    </div>
+
                     <div class="p-1">
                         <FormField v-slot="{ componentField }" name="colorBlind">
                             <FormItem>
@@ -195,11 +220,42 @@ const isSubmitting = ref(false);
 
 const props = defineProps<{
     game: number;
+    platforms: number[];
 }>();
 const emit = defineEmits(["submit"]);
 
+// Map IGDB platform IDs to ReportPlatform values
+const platformMapping = {
+    // PlayStation (PS4: 48, PS5: 167) -> Playstation: 49
+    48: { value: 49, label: "PlayStation" },
+    167: { value: 49, label: "PlayStation" },
+    // Xbox (Xbox One: 49, Xbox Series X: 169) -> Xbox: 169
+    49: { value: 169, label: "Xbox" },
+    169: { value: 169, label: "Xbox" },
+    // PC -> PC: 6
+    6: { value: 6, label: "PC" },
+    // Nintendo Switch -> Nintendo: 130
+    130: { value: 130, label: "Nintendo Switch" },
+};
+
+// Get available platform options based on game's platforms
+const availablePlatforms = computed(() => {
+    const platformSet = new Map();
+    props.platforms.forEach((platformId) => {
+        const mapped = platformMapping[platformId as keyof typeof platformMapping];
+        if (mapped) {
+            platformSet.set(mapped.value, mapped.label);
+        }
+    });
+    return Array.from(platformSet.entries()).map(([value, label]) => ({
+        value: value.toString(),
+        label,
+    }));
+});
+
 // Define Yup validation schema
 const schema = yup.object({
+    platform: yup.string().required("Please select a platform"),
     colorBlind: yup.string().required("Please select an option"),
     closedCaptions: yup.string().required("Please select an option"),
     controllerSupport: yup.string().required("Please select an option"),
@@ -227,6 +283,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     console.log("Form Values:", values);
     const reportSubmit = {
         game_id: props.game,
+        platform: parseInt(values.platform),
         closed_captions: values.closedCaptions,
         color_blind: values.colorBlind,
         full_controller_support: values.controllerSupport,

@@ -18,7 +18,7 @@ func GetSearch(searchTerm string) ([]byte, error) {
 		return nil, fmt.Errorf("IGDB_ACCESS_TOKEN environment variable is not set")
 	}
 
-	postBody := fmt.Sprintf("fields id,name;where platforms = (167,169,48,49,6,130) & game_type = (0,8,9) & where version_parent = null; search \"%s\"; limit 50;", searchTerm)
+	postBody := fmt.Sprintf("fields id,name;where platforms = (167,169,48,49,6,130) & game_type = (0,8,9) & version_parent = null; search \"%s\"; limit 50;", searchTerm)
 	log.Printf("[GetSearch] Searching for: %s", searchTerm)
 
 	body, err := makeIgdbRequest(postBody, igdbSecret, "games")

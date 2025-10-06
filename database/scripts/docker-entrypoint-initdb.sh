@@ -76,6 +76,14 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
+    -- Create report_summaries table for ai summaries
+    CREATE TABLE IF NOT EXISTS report_summaries (
+        id SERIAL PRIMARY KEY,
+        game_id INTEGER NOT NULL UNIQUE,
+        summary TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
 EOSQL
 echo "✓ Tables created"
 
@@ -95,6 +103,12 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
             SELECT 1 FROM pg_constraint WHERE conname = 'unique_username'
         ) THEN
             ALTER TABLE users ADD CONSTRAINT unique_username UNIQUE (username);
+        END IF;
+
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'unique_report_summary_game'
+        ) THEN
+            ALTER TABLE report_summaries ADD CONSTRAINT unique_report_summary_game UNIQUE (game_id);
         END IF;
     END \$\$;
 
@@ -140,6 +154,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE INDEX IF NOT EXISTS idx_reports_game_user ON reports(game_id, user_id);
     CREATE INDEX IF NOT EXISTS idx_featured_games_position ON featured_games(position ASC);
     CREATE INDEX IF NOT EXISTS idx_featured_games_updated_at ON featured_games(updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_report_summaries_game_id ON report_summaries(game_id);
 EOSQL
 echo "✓ Indexes created"
 
@@ -166,6 +181,10 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
 
     DROP TRIGGER IF EXISTS update_featured_games_updated_at ON featured_games;
     CREATE TRIGGER update_featured_games_updated_at BEFORE UPDATE ON featured_games
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+    DROP TRIGGER IF EXISTS update_report_summaries_updated_at ON report_summaries;
+    CREATE TRIGGER update_report_summaries_updated_at BEFORE UPDATE ON report_summaries
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 EOSQL
 echo "✓ Triggers created"

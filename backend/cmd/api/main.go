@@ -46,6 +46,7 @@ func (env *Env) MountHandlers() {
 		r.Get("/cards/{game}", env.handlers.GetReportCardsHandler)
 		r.Get("/features/{game}", env.handlers.GetFeatureReportsHandler)
 		r.Get("/score/{game}", env.handlers.GetScoreHandler)
+		r.Get("/summary/{game}", env.handlers.GetReportSummaryHandler)
 	})
 
 	// Set up routes for user-related actions

@@ -63,6 +63,92 @@ func (m *DatabaseModel) InsertReport(report *types.ReportRow) error {
 	log.Printf("[InsertReport] Successfully inserted report ID %d for game ID %d by user ID %d (score: %d)", reportID, report.GameID, report.UserID, report.Score)
 	return nil
 }
+func (m *DatabaseModel) InsertReportSummary(summary *types.ReportSummaryRow) error {
+
+	// Check if the database connection is valid
+	if m.DB == nil {
+		log.Printf("[InsertReportSummary] Database connection is nil")
+		return errors.New("database connection is nil")
+	}
+
+	if summary == nil {
+		log.Printf("[InsertReportSummary] summary is nil")
+		return errors.New("Summary cannot be nil")
+	}
+
+	log.Printf("[InsertReportSummary] Attempting to insert for game ID %d ", summary.GameID)
+	query := `
+    		INSERT INTO report_summaries (game_id, summary)
+    		VALUES ($1, $2)
+    		ON CONFLICT (game_id) DO UPDATE SET
+    			summary = EXCLUDED.summary,
+    			updated_at = NOW()`
+	_, err := m.DB.Exec(query, summary.GameID, summary.Summary)
+	if err != nil {
+		log.Printf("[InsertReportSummary] Error upserting report summary for game ID %d: %v", summary.GameID, err)
+		return fmt.Errorf("error upserting report summary: %w", err)
+	}
+	log.Printf("[InsertReportSummary] Successfully upserted report summary for game ID %d", summary.GameID)
+	return nil
+}
+
+// GetReportCount returns the number of reports for a specific game
+func (m *DatabaseModel) GetReportCount(gameID int) (int, error) {
+	if m.DB == nil {
+		log.Printf("[GetReportCount] Database connection is nil")
+		return 0, errors.New("database connection is nil")
+	}
+
+	log.Printf("[GetReportCount] Querying report count for game ID: %d", gameID)
+
+	var count int
+	query := `SELECT COUNT(*) FROM reports WHERE game_id = $1`
+	err := m.DB.QueryRow(query, gameID).Scan(&count)
+	if err != nil {
+		log.Printf("[GetReportCount] Error querying report count for game ID %d: %v", gameID, err)
+		return 0, fmt.Errorf("error querying report count: %w", err)
+	}
+
+	log.Printf("[GetReportCount] Successfully retrieved count %d for game ID %d", count, gameID)
+	return count, nil
+}
+
+// QueryReportsForSummarization retrieves reports for AI summarization
+func (m *DatabaseModel) QueryReportsForSummarization(gameID int) ([]types.ReportRow, error) {
+	if m.DB == nil {
+		log.Printf("[QueryReportsForSummarization] Database connection is nil")
+		return nil, errors.New("database connection is nil")
+	}
+
+	log.Printf("[QueryReportsForSummarization] Querying reports for game ID: %d", gameID)
+
+	query := `SELECT id, game_id, user_id, platform, report FROM reports WHERE game_id = $1 ORDER BY created_at DESC`
+	rows, err := m.DB.Query(query, gameID)
+	if err != nil {
+		log.Printf("[QueryReportsForSummarization] Error querying reports for game ID %d: %v", gameID, err)
+		return nil, fmt.Errorf("error querying reports: %w", err)
+	}
+	defer rows.Close()
+
+	var reports []types.ReportRow
+	for rows.Next() {
+		var report types.ReportRow
+		err := rows.Scan(&report.ID, &report.GameID, &report.UserID, &report.Platform, &report.Report)
+		if err != nil {
+			log.Printf("[QueryReportsForSummarization] Error scanning report row for game ID %d: %v", gameID, err)
+			return nil, fmt.Errorf("error scanning report: %w", err)
+		}
+		reports = append(reports, report)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("[QueryReportsForSummarization] Error iterating report rows for game ID %d: %v", gameID, err)
+		return nil, fmt.Errorf("error iterating reports: %w", err)
+	}
+
+	log.Printf("[QueryReportsForSummarization] Successfully retrieved %d reports for game ID %d", len(reports), gameID)
+	return reports, nil
+}
 
 // QueryReportCards retrieves report cards for a specific game
 func (m *DatabaseModel) QueryReportCards(id int) ([]types.ReportCards, error) {
@@ -87,7 +173,7 @@ func (m *DatabaseModel) QueryReportCards(id int) ([]types.ReportCards, error) {
 	var reports []types.ReportCards
 	for rows.Next() {
 		var report types.ReportCards
-		err := rows.Scan(&report.ID, &report.CreatedAt, &report.GameID, &report.UserID, &report.Score, &report.Report)
+		err := rows.Scan(&report.ID, &report.CreatedAt, &report.GameID, &report.UserID, &report.Platform, &report.Score, &report.Report)
 		if err != nil {
 			log.Printf("[QueryReportCards] Error scanning report row for game ID %d: %v", id, err)
 			return nil, fmt.Errorf("error scanning report: %w", err)
@@ -141,4 +227,29 @@ func (m *DatabaseModel) QueryAccessibilityScores(id int) ([]int, error) {
 
 	log.Printf("[QueryAccessibilityScores] Successfully retrieved %d scores for game ID %d", len(scores), id)
 	return scores, nil
+}
+
+// QueryReportSummary retrieves the AI-generated summary for a specific game
+func (m *DatabaseModel) QueryReportSummary(gameID int) (*types.ReportSummaryRow, error) {
+	if m.DB == nil {
+		log.Printf("[QueryReportSummary] Database connection is nil")
+		return nil, errors.New("database connection is nil")
+	}
+
+	log.Printf("[QueryReportSummary] Querying report summary for game ID: %d", gameID)
+
+	var summary types.ReportSummaryRow
+	query := `SELECT id, game_id, summary FROM report_summaries WHERE game_id = $1`
+	err := m.DB.QueryRow(query, gameID).Scan(&summary.ID, &summary.GameID, &summary.Summary)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("[QueryReportSummary] No summary found for game ID %d", gameID)
+			return nil, nil
+		}
+		log.Printf("[QueryReportSummary] Error querying summary for game ID %d: %v", gameID, err)
+		return nil, fmt.Errorf("error querying report summary: %w", err)
+	}
+
+	log.Printf("[QueryReportSummary] Successfully retrieved summary for game ID %d", gameID)
+	return &summary, nil
 }

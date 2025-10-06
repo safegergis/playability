@@ -86,13 +86,25 @@
                             Real experiences from players like you
                         </p>
                     </div>
-                    <ReportButton :game="gameID" @submit="
+                    <ReportButton :game="gameID" :platforms="game?.platforms || []" @submit="
                         refreshNuxtData([
                             `reports-${gameID}`,
                             `featureStats-${gameID}`,
                             `score-${gameID}`,
+                            `summary-${gameID}`,
                         ])
                         " />
+                </div>
+
+                <!-- AI-Generated Summary -->
+                <div v-if="reportSummary" class="dark animate-slide-up bg-card/50 border border-primary/20 rounded-xl p-6 space-y-3">
+                    <div class="flex items-center gap-3">
+                        <Icon name="lucide:sparkles" class="w-6 h-6 text-primary" aria-hidden="true" />
+                        <h3 class="text-xl font-semibold">AI-Generated Accessibility Summary</h3>
+                    </div>
+                    <p class="text-muted-foreground leading-relaxed">
+                        {{ reportSummary.summary }}
+                    </p>
                 </div>
 
                 <!-- Reports Grid -->
@@ -178,6 +190,17 @@ const { data: score } = await useFetch<number | null>(
         baseURL,
         key: `score-${gameID.value}`,
         transform: (data) => data ? parseFloat(data as any) : null,
+        default: () => null,
+        watch: [gameID]
+    }
+);
+
+// Fetch report summary
+const { data: reportSummary } = await useFetch<ReportSummary | null>(
+    () => `/reports/summary/${gameID.value}`,
+    {
+        baseURL,
+        key: `summary-${gameID.value}`,
         default: () => null,
         watch: [gameID]
     }

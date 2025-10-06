@@ -8,18 +8,25 @@
                     <CardTitle class="text-lg flex items-center gap-2 mb-2">
                         <Icon name="lucide:user" class="w-4 h-4 text-primary flex-shrink-0" aria-hidden="true" />
                         <span class="truncate">{{ report.username }}</span>
+                        <div class="flex items-center gap-1.5" :aria-label="`Platform: ${platformIcon.label}`">
+                            <Icon :name="platformIcon.icon" class="w-4 h-4 flex-shrink-0 text-lg text-primary"
+                                :aria-label="platformIcon.label" />
+                            <span class="text-sm sr-only">{{ platformIcon.label }}</span>
+                        </div>
                     </CardTitle>
-                    <CardDescription class="flex items-center gap-2">
-                        <Icon name="lucide:calendar" class="w-3 h-3 flex-shrink-0" aria-hidden="true" />
-                        <time :datetime="report.created_at" class="text-sm">
-                            {{
-                                new Date(report.created_at).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                })
-                            }}
-                        </time>
+                    <CardDescription class="flex items-center gap-3">
+                        <div class="flex items-center gap-1.5">
+                            <Icon name="lucide:calendar" class="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                            <time :datetime="report.created_at" class="text-sm">
+                                {{
+                                    new Date(report.created_at).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                    })
+                                }}
+                            </time>
+                        </div>
                     </CardDescription>
                 </div>
 
@@ -65,6 +72,17 @@ const report = computed(() => ({
     ...props.report,
     username: user.value?.username || props.report.username
 }));
+
+// Platform icon mapping
+const platformIcon = computed(() => {
+    const platformMap: Record<number, { icon: string; label: string }> = {
+        49: { icon: "mdi:sony-playstation", label: "PlayStation" },
+        169: { icon: "mdi:microsoft-xbox", label: "Xbox" },
+        6: { icon: "mdi:steam", label: "PC" },
+        130: { icon: "mdi:nintendo-switch", label: "Nintendo Switch" },
+    };
+    return platformMap[props.report.platform] || { icon: "lucide:gamepad-2", label: "Unknown" };
+});
 </script>
 
 <style scoped>

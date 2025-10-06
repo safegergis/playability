@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Game struct {
 	ID                    int    `json:"id"`
@@ -76,6 +79,21 @@ const (
 	Nintendo    ReportPlatform = 130
 )
 
+func (e ReportPlatform) String() string {
+	switch e {
+	case Playstation:
+		return "Playstation"
+	case Xbox:
+		return "Xbox"
+	case PC:
+		return "PC"
+	case Nintendo:
+		return "Nintendo"
+	default:
+		return fmt.Sprintf("Unknown platform : %d", e)
+	}
+}
+
 type ReportRegister struct {
 	GameID                int            `json:"game_id"`
 	UserID                int            `json:"user_id"`
@@ -98,6 +116,11 @@ type ReportRow struct {
 	ControllerRemapping   string         `json:"controller_remapping"`
 	Score                 int            `json:"score"`
 	Report                string         `json:"report"`
+}
+type ReportSummaryRow struct {
+	ID      int    `json:"id"`
+	GameID  int    `json:"game_id"`
+	Summary string `json:"summary"`
 }
 type ReportCards struct {
 	ID        int            `json:"id"`
