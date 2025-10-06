@@ -60,6 +60,8 @@ func (env *Env) PostCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the newly created user to send verification email
+	// UNCOMMENT THIS FOR PROD
+	// WAITING ON EMAIL SERVICE TO BE ENABLED, FOR TESTING REMOVING THE VERIFICATION EMAIL
 	// userRow, err := env.DB.GetUserByEmail(user.Email)
 	if err != nil {
 		log.Printf("[PostCreateUser] Error getting user for verification email: %v", err)
@@ -69,6 +71,8 @@ func (env *Env) PostCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send verification email
+	// UNCOMMENT THIS FOR PROD
+	// WAITING ON EMAIL SERVICE TO BE ENABLED, FOR TESTING REMOVING THE VERIFICATION EMAIL
 	// verification, err := env.SendVerifyEmail(userRow)
 	if err != nil {
 		log.Printf("[PostCreateUser] Error sending verification email: %v", err)
@@ -78,6 +82,8 @@ func (env *Env) PostCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Store verification in database
+	// UNCOMMENT THIS FOR PROD
+	// WAITING ON EMAIL SERVICE TO BE ENABLED, FOR TESTING REMOVING THE VERIFICATION EMAIL
 	// err = env.DB.InsertVerification(verification)
 	if err != nil {
 		log.Printf("[PostCreateUser] Error storing verification: %v", err)
@@ -134,6 +140,9 @@ func (env *Env) PostLoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if user is verified
+	// UNCOMMENT THIS FOR PROD
+	// WAITING ON EMAIL SERVICE TO BE ENABLED, FOR TESTING REMOVING THE VERIFICATION EMAIL
+	//	if !userRow.Verified {
 	if userRow.Verified {
 		log.Printf("[PostLoginUser] User not verified: %s", user.Email)
 		w.Header().Set("Content-Type", "application/json")

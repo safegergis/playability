@@ -46,8 +46,5 @@ export default defineNuxtConfig({
         plugins: [
             tailwindcss()
         ],
-        optimizeDeps: {
-            exclude: ["vee-validate"],
-        },
     },
 });

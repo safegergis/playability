@@ -133,10 +133,10 @@ func (m DatabaseModel) QueryUser(userID int) (types.UserRow, error) {
 
 	log.Printf("[QueryUser] Fetching user with ID: %d", userID)
 
-	query := `SELECT id, username, email, hash, num_reports FROM users WHERE id = $1`
+	query := `SELECT id, username, email, hash, verified, num_reports FROM users WHERE id = $1`
 
 	var user types.UserRow
-	err := m.DB.QueryRow(query, userID).Scan(&user.ID, &user.Username, &user.Email, &user.Hash, &user.NumOfReports)
+	err := m.DB.QueryRow(query, userID).Scan(&user.ID, &user.Username, &user.Email, &user.Hash, &user.Verified, &user.NumOfReports)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("[QueryUser] No user found with ID: %d", userID)
