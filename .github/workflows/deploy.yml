@@ -1,0 +1,111 @@
+name: Build, Push, and Deploy to Digital Ocean
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/playability-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/playability-backend:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/playability-backend:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/playability-backend:buildcache,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/playability-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/playability-frontend:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/playability-frontend:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/playability-frontend:buildcache,mode=max
+
+  deploy:
+    name: Deploy to Digital Ocean
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+
+      - name: Add Digital Ocean host to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.DO_DROPLET_IP }} >> ~/.ssh/known_hosts
+
+      - name: Copy docker-compose.prod.yml to droplet
+        run: |
+          scp docker-compose.prod.yml ${{ secrets.DO_DROPLET_USER }}@${{ secrets.DO_DROPLET_IP }}:~/playability/
+
+      - name: Deploy to Digital Ocean
+        run: |
+          ssh ${{ secrets.DO_DROPLET_USER }}@${{ secrets.DO_DROPLET_IP }} << 'EOF'
+            cd ~/playability
+
+            # Pull the latest images
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/playability-backend:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/playability-frontend:latest
+
+            # Stop and remove old containers
+            docker-compose -f docker-compose.prod.yml down
+
+            # Start new containers with updated images
+            docker-compose -f docker-compose.prod.yml up -d --force-recreate
+
+            # Clean up old images
+            docker image prune -af --filter "until=24h"
+
+            # Show running containers
+            docker-compose -f docker-compose.prod.yml ps
+          EOF
+
+      - name: Verify deployment
+        run: |
+          ssh ${{ secrets.DO_DROPLET_USER }}@${{ secrets.DO_DROPLET_IP }} << 'EOF'
+            echo "Checking container health..."
+            docker-compose -f ~/playability/docker-compose.prod.yml ps
+
+            echo "Checking backend logs..."
+            docker logs playability-backend --tail 50
+
+            echo "Checking frontend logs..."
+            docker logs playability-frontend --tail 50
+          EOF

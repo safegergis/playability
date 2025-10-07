@@ -35,9 +35,7 @@ services:
 
   # Backend API (Go)
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/playability-backend:latest
     container_name: playability-backend
     restart: unless-stopped
     env_file:
@@ -52,9 +50,7 @@ services:
 
   # Frontend (Nuxt 3) - Production
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/playability-frontend:latest
     container_name: playability-frontend
     restart: unless-stopped
     env_file:
