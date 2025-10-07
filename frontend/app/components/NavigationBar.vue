@@ -38,61 +38,62 @@
                 </form>
             </div>
 
-            <!-- Desktop Navigation Links -->
-            <div class="hidden lg:flex items-center gap-2">
-                <NavigationMenu class="dark">
-                    <NavigationMenuList>
-                        <NavigationMenuItem>
-                            <NuxtLink to="/about">
-                                <NavigationMenuLink :class="navigationMenuTriggerStyle()"
-                                    class="transition-all duration-200 hover:scale-105 active:scale-95">
-                                    About
-                                </NavigationMenuLink>
-                            </NuxtLink>
-                        </NavigationMenuItem>
-                        <NavigationMenuItem>
-                            <NuxtLink to="/donate">
-                                <NavigationMenuLink :class="navigationMenuTriggerStyle()"
-                                    class="transition-all duration-200 hover:scale-105 active:scale-95">
-                                    Donate
-                                </NavigationMenuLink>
-                            </NuxtLink>
-                        </NavigationMenuItem>
-
-                        <!-- Authentication Links -->
-                        <NavigationMenuItem v-if="!authStore.loggedIn" class="ml-4">
-                            <NuxtLink to="/temp-maintenance">
-                                <Button variant="link"
-                                    class="dark transition-all duration-200 hover:scale-105 active:scale-95">
-                                    Login
-                                </Button>
-                            </NuxtLink>
-                        </NavigationMenuItem>
-                        <NavigationMenuItem v-if="!authStore.loggedIn">
-                            <NuxtLink to="/temp-maintenance">
-                                <Button variant="default" size="sm"
-                                    class="dark transition-all duration-200 hover:scale-105 hover:shadow-md active:scale-95">
-                                    Register
-                                </Button>
-                            </NuxtLink>
-                        </NavigationMenuItem>
-                        <NavigationMenuItem v-if="authStore.loggedIn" class="ml-4">
-                            <NuxtLink to="/profile">
-                                <Button variant="link"
-                                    class="dark group transition-all duration-200 hover:scale-105 active:scale-95">
-                                    <Icon name="lucide:user"
-                                        class="mr-2 h-4 w-4 transition-transform duration-200 group-hover:scale-110"
-                                        aria-hidden="true" />
-                                    My Profile
-                                </Button>
-                            </NuxtLink>
-                        </NavigationMenuItem>
-                    </NavigationMenuList>
-                </NavigationMenu>
-            </div>
-
-            <!-- Mobile Actions -->
+            <!-- Right Side Navigation -->
             <div class="flex items-center gap-1 sm:gap-2">
+                <!-- Desktop Navigation Links -->
+                <div class="hidden lg:flex items-center gap-2">
+                    <NavigationMenu class="dark">
+                        <NavigationMenuList>
+                            <NavigationMenuItem>
+                                <NuxtLink to="/about">
+                                    <NavigationMenuLink :class="navigationMenuTriggerStyle()"
+                                        class="transition-all duration-200 hover:scale-105 active:scale-95">
+                                        About
+                                    </NavigationMenuLink>
+                                </NuxtLink>
+                            </NavigationMenuItem>
+                            <NavigationMenuItem>
+                                <NuxtLink to="/donate">
+                                    <NavigationMenuLink :class="navigationMenuTriggerStyle()"
+                                        class="transition-all duration-200 hover:scale-105 active:scale-95">
+                                        Donate
+                                    </NavigationMenuLink>
+                                </NuxtLink>
+                            </NavigationMenuItem>
+
+                            <!-- Authentication Links -->
+                            <NavigationMenuItem v-if="!authStore.loggedIn" class="ml-4">
+                                <NuxtLink to="/temp-maintenance">
+                                    <Button variant="link"
+                                        class="dark transition-all duration-200 hover:scale-105 active:scale-95">
+                                        Login
+                                    </Button>
+                                </NuxtLink>
+                            </NavigationMenuItem>
+                            <NavigationMenuItem v-if="!authStore.loggedIn">
+                                <NuxtLink to="/temp-maintenance">
+                                    <Button variant="default" size="sm"
+                                        class="dark transition-all duration-200 hover:scale-105 hover:shadow-md active:scale-95">
+                                        Register
+                                    </Button>
+                                </NuxtLink>
+                            </NavigationMenuItem>
+                            <NavigationMenuItem v-if="authStore.loggedIn" class="ml-4">
+                                <NuxtLink to="/profile">
+                                    <Button variant="link"
+                                        class="dark group transition-all duration-200 hover:scale-105 active:scale-95">
+                                        <Icon name="lucide:user"
+                                            class="mr-2 h-4 w-4 transition-transform duration-200 group-hover:scale-110"
+                                            aria-hidden="true" />
+                                        My Profile
+                                    </Button>
+                                </NuxtLink>
+                            </NavigationMenuItem>
+                        </NavigationMenuList>
+                    </NavigationMenu>
+                </div>
+
+                <!-- Mobile Actions -->
                 <!-- Mobile Search Toggle -->
                 <Button variant="ghost" size="icon"
                     class="md:hidden dark transition-transform duration-150 hover:scale-110 active:scale-95"

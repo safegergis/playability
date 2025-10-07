@@ -1,5 +1,28 @@
 <template>
     <main class="container mx-auto px-4 py-8 lg:py-12 space-y-16">
+        <!-- Hero Section -->
+        <section aria-labelledby="hero-heading" class="relative overflow-hidden">
+            <div
+                class="relative rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-8 lg:p-8 -mb-10">
+
+                <!-- Content -->
+                <div class="relative z-5 dark text-center max-w-3xl mx-auto ">
+                    <div
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary mb-2">
+                        <Icon name="lucide:trending-up" class="w-4 h-4" aria-hidden="true" />
+                        <span>Trending Now</span>
+                    </div>
+                    <h1 id="hero-heading"
+                        class="text-4xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                        Discover What's Popular
+                    </h1>
+                    <p class="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                        Explore the most played games right now and see how accessible they are for everyone
+                    </p>
+                </div>
+            </div>
+        </section>
+
         <!-- Featured Games Section -->
         <section aria-labelledby="featured-games-heading" class="animate-slide-up">
             <h2 id="featured-games-heading"
