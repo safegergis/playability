@@ -13,7 +13,7 @@ services:
     depends_on:
       - playability-frontend
     networks:
-      -playability-network
+      - playability-network
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
