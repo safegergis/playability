@@ -4,8 +4,8 @@ services:
     container_name: nginx
     restart: always
     ports:
-      - "80:80" # Map port 80 of the host to port 80 of the Nginx container_nam\
-       - "443:443" # Uncomment and configure for HTTPS
+      - "80:80" # Map port 80 of the host to port 80 of the Nginx container_nam
+      - "443:443" # Uncomment and configure for HTTPS
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d
       - certbot-etc:/etc/letsencrypt
