@@ -2,7 +2,18 @@
     <main class="min-h-screen">
         <!-- Game Header Section -->
         <div class="container mx-auto my-auto px-4 py-8 lg:py-12">
-            <div v-if="game" class="space-y-8">
+            <div v-if="gameStatus === 'pending'" class="flex flex-col items-center justify-center min-h-[50vh] space-y-4" role="status"
+                aria-live="polite">
+                <Icon name="lucide:loader-2" class="w-16 h-16 animate-spin text-primary" aria-hidden="true" />
+                <p class="text-xl text-muted-foreground">Loading game details...</p>
+                <span class="sr-only">Loading game information, please wait</span>
+            </div>
+            <div v-else-if="gameStatus === 'error'" class="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+                <Icon name="lucide:alert-circle" class="w-16 h-16 text-destructive" aria-hidden="true" />
+                <p class="text-xl text-destructive">Failed to load game details.</p>
+                <p class="text-muted-foreground">Please try again later.</p>
+            </div>
+            <div v-else-if="game" class="space-y-8">
                 <!-- Game Info Section -->
                 <section class="flex flex-col lg:flex-row gap-8 lg:gap-12 animate-fade-in">
                     <!-- Cover Art -->
@@ -129,15 +140,9 @@ const platformDefinitions = [
 const route = useRoute();
 const gameID = computed(() => Number.parseInt(route.params.id as string));
 
-const config = useRuntimeConfig();
-const baseURL = import.meta.server ? config.apiUrl : config.public.apiUrl;
-
-// Fetch game data
-const { data: game } = await useFetch<Game>(
-    '/games',
+const { data: game, status: gameStatus } = useLazyFetch<Game>(
+    () => `/api/games/${gameID.value}`,
     {
-        baseURL,
-        query: { id: gameID },
         watch: [gameID],
         transform: (data) => {
             if (data) {
@@ -162,10 +167,9 @@ const { data: game } = await useFetch<Game>(
 );
 
 // Fetch reports data
-const { data: reports } = await useFetch<Report[]>(
-    () => `/reports/cards/${gameID.value}`,
+const { data: reports, status: reportsStatus } = useLazyFetch<Report[]>(
+    () => `/api/reports/cards/${gameID.value}`,
     {
-        baseURL,
         key: `reports-${gameID.value}`,
         default: () => [],
         watch: [gameID]
@@ -173,10 +177,9 @@ const { data: reports } = await useFetch<Report[]>(
 );
 
 // Fetch feature stats data
-const { data: featureStats } = await useFetch<FeatureStat[] | null>(
-    () => `/reports/features/${gameID.value}`,
+const { data: featureStats, status: featureStatsStatus } = useLazyFetch<FeatureStat[] | null>(
+    () => `/api/reports/features/${gameID.value}`,
     {
-        baseURL,
         key: `featureStats-${gameID.value}`,
         default: () => null,
         watch: [gameID]
@@ -184,10 +187,9 @@ const { data: featureStats } = await useFetch<FeatureStat[] | null>(
 );
 
 // Fetch score data
-const { data: score } = await useFetch<number | null>(
-    () => `/reports/score/${gameID.value}`,
+const { data: score, status: scoreStatus } = useLazyFetch<number | null>(
+    () => `/api/reports/score/${gameID.value}`,
     {
-        baseURL,
         key: `score-${gameID.value}`,
         transform: (data) => data ? parseFloat(data as any) : null,
         default: () => null,
@@ -196,10 +198,9 @@ const { data: score } = await useFetch<number | null>(
 );
 
 // Fetch report summary
-const { data: reportSummary } = await useFetch<ReportSummary | null>(
-    () => `/reports/summary/${gameID.value}`,
+const { data: reportSummary, status: reportSummaryStatus } = useLazyFetch<ReportSummary | null>(
+    () => `/api/reports/summary/${gameID.value}`,
     {
-        baseURL,
         key: `summary-${gameID.value}`,
         default: () => null,
         watch: [gameID]
@@ -225,6 +226,12 @@ useHead(() => ({
         }
     ]
 }));
+
+watch(gameStatus, (status) => {
+    if (status === 'success' && !game.value) {
+        showError({ statusCode: 404, statusMessage: 'Game not found' });
+    }
+});
 
 </script>
 

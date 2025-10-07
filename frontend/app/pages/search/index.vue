@@ -125,12 +125,9 @@
 const route = useRoute();
 const searchQuery = computed(() => route.query.s as string);
 
-const config = useRuntimeConfig();
-
 const { data: searchResults, status } = await useFetch<SearchResult[]>(
-    '/search',
+    '/api/search',
     {
-        baseURL: import.meta.server ? config.apiUrl : config.public.apiUrl,
         query: { search: searchQuery },
         default: () => [],
         watch: [searchQuery]

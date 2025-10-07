@@ -151,9 +151,6 @@
 </template>
 
 <script setup lang="ts">
-const config = useRuntimeConfig();
-
-// Set page metadata for SEO and accessibility
 useHead({
     title: 'Playability - Game Accessibility Information',
     meta: [
@@ -165,10 +162,9 @@ useHead({
 });
 
 const { data: FeaturedGames, status } = await useFetch<FeaturedGame[]>(
-    '/featured',
+    '/api/games/featured',
     {
         key: 'featured-games',
-        baseURL: import.meta.server ? config.apiUrl : config.public.apiUrl,
         default: () => []
     }
 );
