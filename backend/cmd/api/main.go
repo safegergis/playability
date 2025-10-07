@@ -60,8 +60,9 @@ func (env *Env) MountHandlers() {
 
 	// Set up routes for user-related actions
 	env.router.Route("/user", func(r chi.Router) {
-		r.Post("/login", env.handlers.PostLoginUser)
-		r.Post("/register", env.handlers.PostCreateUser)
+		// TEMPORARILY DISABLED - awaiting mail service verification
+		// r.Post("/login", env.handlers.PostLoginUser)
+		// r.Post("/register", env.handlers.PostCreateUser)
 		r.Get("/{id}", env.handlers.GetUserHandler)
 		// Commented out route for getting user reports
 		// r.Get("/reports/{id}", env.handlers.GetReportHandler)
