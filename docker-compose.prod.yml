@@ -11,7 +11,7 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
     depends_on:
-      - playability-frontend
+      - frontend
     networks:
       - playability-network
   # PostgreSQL Database
