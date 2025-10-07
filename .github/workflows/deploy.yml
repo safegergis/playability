@@ -85,23 +85,23 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/playability-frontend:latest
 
             # Stop and remove old containers
-            docker-compose -f docker-compose.prod.yml down
+            docker compose -f docker-compose.prod.yml down
 
             # Start new containers with updated images
-            docker-compose -f docker-compose.prod.yml up -d --force-recreate
+            docker compose -f docker-compose.prod.yml up -d --force-recreate
 
             # Clean up old images
             docker image prune -af --filter "until=24h"
 
             # Show running containers
-            docker-compose -f docker-compose.prod.yml ps
+            docker compose -f docker-compose.prod.yml ps
           EOF
 
       - name: Verify deployment
         run: |
           ssh ${{ secrets.DO_DROPLET_USER }}@${{ secrets.DO_DROPLET_IP }} << 'EOF'
             echo "Checking container health..."
-            docker-compose -f ~/playability/docker-compose.prod.yml ps
+            docker compose -f ~/playability/docker-compose.prod.yml ps
 
             echo "Checking backend logs..."
             docker logs playability-backend --tail 50

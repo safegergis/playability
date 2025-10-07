@@ -29,7 +29,7 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: playability-db:
+    container_name: playability-db
     restart: unless-stopped
     env_file:
       - .env
