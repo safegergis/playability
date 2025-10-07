@@ -8,11 +8,12 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"playability/db"
+	"playability/pkg/ai"
 	"playability/types"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-chi/chi/v5"
@@ -22,15 +23,135 @@ import (
 func TestPostReportHandler(t *testing.T) {
 	// Set up JWT for authentication
 	tokenAuth := jwtauth.New("HS256", []byte("test-secret"), nil)
-	os.Setenv("CLAUDE_API_KEY", "test-api-key")
-	defer os.Unsetenv("CLAUDE_API_KEY")
 
-	// Note: This test cannot fully test AI moderation without mocking the Claude API
-	// The AI moderation tests should be in pkg/ai/moderation_test.go
-	// Here we test the handler logic assuming moderation passes
+	t.Run("successful report submission with AI moderation pass", func(t *testing.T) {
+		mockDB, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("Failed to create mock: %v", err)
+		}
+		defer mockDB.Close()
 
-	t.Run("successful report submission - moderation mocked", func(t *testing.T) {
-		t.Skip("Requires AI moderation mocking - AI service should be dependency injected")
+		mockAI := &ai.MockAIService{
+			ModerationResponse: &types.ModerationResponse{
+				Violation:  false,
+				Categories: []string{},
+			},
+		}
+
+		env := &Env{
+			DB: db.DatabaseModel{DB: mockDB},
+			AI: mockAI,
+		}
+
+		reportBody := types.ReportRegister{
+			GameID:   123,
+			Platform: types.PC,
+			Score:    8,
+			Report:   "Great accessibility features",
+		}
+		body, _ := json.Marshal(reportBody)
+
+		// Expect duplicate check in InsertReport
+		mock.ExpectQuery("SELECT id FROM reports WHERE game_id").
+			WithArgs(123, sqlmock.AnyArg()).
+			WillReturnError(sql.ErrNoRows)
+
+		// Expect update user num_reports
+		mock.ExpectExec("UPDATE users SET num_reports").
+			WithArgs(sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		// Expect InsertReport (uses QueryRow with RETURNING id)
+		mock.ExpectQuery("INSERT INTO reports").
+			WithArgs(123, sqlmock.AnyArg(), types.PC, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), 8, "Great accessibility features").
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+		// Expect GetReportCount
+		mock.ExpectQuery("SELECT COUNT").
+			WithArgs(123).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(5))
+
+		// Create JWT token
+		_, tokenString, _ := tokenAuth.Encode(map[string]interface{}{"sub": "42"})
+
+		req := httptest.NewRequest("POST", "/user/report", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		token, _ := tokenAuth.Decode(tokenString)
+		ctx := jwtauth.NewContext(req.Context(), token, nil)
+		req = req.WithContext(ctx)
+
+		w := httptest.NewRecorder()
+
+		env.PostReportHandler(w, req)
+
+		if w.Code != http.StatusCreated {
+			t.Errorf("PostReportHandler() status = %d, want %d. Body: %s", w.Code, http.StatusCreated, w.Body.String())
+		}
+
+		// Verify AI moderation was called
+		if mockAI.ModerationCallCount != 1 {
+			t.Errorf("AI.Moderation() called %d times, want 1", mockAI.ModerationCallCount)
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("Unfulfilled expectations: %v", err)
+		}
+	})
+
+	t.Run("report blocked by AI moderation", func(t *testing.T) {
+		mockDB, _, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("Failed to create mock: %v", err)
+		}
+		defer mockDB.Close()
+
+		mockAI := &ai.MockAIService{
+			ModerationResponse: &types.ModerationResponse{
+				Violation:   true,
+				Categories:  []string{"Harassment"},
+				Explanation: "Contains harassment",
+			},
+		}
+
+		env := &Env{
+			DB: db.DatabaseModel{DB: mockDB},
+			AI: mockAI,
+		}
+
+		reportBody := types.ReportRegister{
+			GameID:   123,
+			Platform: types.PC,
+			Score:    8,
+			Report:   "Bad content",
+		}
+		body, _ := json.Marshal(reportBody)
+
+		_, tokenString, _ := tokenAuth.Encode(map[string]interface{}{"sub": "42"})
+
+		req := httptest.NewRequest("POST", "/user/report", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		token, _ := tokenAuth.Decode(tokenString)
+		ctx := jwtauth.NewContext(req.Context(), token, nil)
+		req = req.WithContext(ctx)
+
+		w := httptest.NewRecorder()
+
+		env.PostReportHandler(w, req)
+
+		if w.Code != http.StatusForbidden {
+			t.Errorf("PostReportHandler() status = %d, want %d", w.Code, http.StatusForbidden)
+		}
+
+		if !strings.Contains(w.Body.String(), "Harassment") {
+			t.Errorf("PostReportHandler() body should contain violation category")
+		}
+
+		// Verify AI moderation was called
+		if mockAI.ModerationCallCount != 1 {
+			t.Errorf("AI.Moderation() called %d times, want 1", mockAI.ModerationCallCount)
+		}
 	})
 
 	t.Run("invalid JSON body", func(t *testing.T) {
@@ -40,7 +161,8 @@ func TestPostReportHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		req := httptest.NewRequest("POST", "/user/report", bytes.NewBufferString("invalid json"))
 		req.Header.Set("Content-Type", "application/json")
@@ -60,7 +182,8 @@ func TestPostReportHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		reportBody := types.ReportRegister{
 			GameID:   123,
@@ -88,7 +211,8 @@ func TestPostReportHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		reportBody := types.ReportRegister{
 			GameID:   123,
@@ -134,13 +258,14 @@ func TestGetReportCardsHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
-		rows := sqlmock.NewRows([]string{"id", "created_at", "game_id", "game_name", "cover_art", "user_id", "platform", "score", "report"}).
-			AddRow(1, "2024-01-01", 123, "Test Game", "cover.jpg", 1, types.PC, 8, "Good accessibility").
-			AddRow(2, "2024-01-02", 123, "Test Game", "cover.jpg", 2, types.Playstation, 7, "Decent features")
+		rows := sqlmock.NewRows([]string{"id", "created_at", "game_id", "user_id", "platform", "score", "report"}).
+			AddRow(1, time.Now(), 123, 1, types.PC, 8, "Good accessibility").
+			AddRow(2, time.Now(), 123, 2, types.Playstation, 7, "Decent features")
 
-		mock.ExpectQuery("SELECT (.+) FROM reports r JOIN games g").
+		mock.ExpectQuery("SELECT id, created_at, game_id, user_id, platform, score, report FROM reports WHERE game_id").
 			WithArgs(123).
 			WillReturnRows(rows)
 
@@ -175,7 +300,8 @@ func TestGetReportCardsHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		req := httptest.NewRequest("GET", "/reports/cards/invalid", nil)
 		w := httptest.NewRecorder()
@@ -198,11 +324,12 @@ func TestGetReportCardsHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
-		rows := sqlmock.NewRows([]string{"id", "created_at", "game_id", "game_name", "cover_art", "user_id", "platform", "score", "report"})
+		rows := sqlmock.NewRows([]string{"id", "created_at", "game_id", "user_id", "platform", "score", "report"})
 
-		mock.ExpectQuery("SELECT (.+) FROM reports r JOIN games g").
+		mock.ExpectQuery("SELECT id, created_at, game_id, user_id, platform, score, report FROM reports WHERE game_id").
 			WithArgs(999).
 			WillReturnRows(rows)
 
@@ -237,9 +364,10 @@ func TestGetReportCardsHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
-		mock.ExpectQuery("SELECT (.+) FROM reports r JOIN games g").
+		mock.ExpectQuery("SELECT id, created_at, game_id, user_id, platform, score, report FROM reports WHERE game_id").
 			WithArgs(123).
 			WillReturnError(errors.New("database error"))
 
@@ -270,7 +398,8 @@ func TestGetReportSummaryHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		rows := sqlmock.NewRows([]string{"id", "game_id", "summary"}).
 			AddRow(1, 123, "This game has excellent accessibility features including full controller support and color blind modes.")
@@ -313,7 +442,8 @@ func TestGetReportSummaryHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		req := httptest.NewRequest("GET", "/reports/summary/invalid", nil)
 		w := httptest.NewRecorder()
@@ -336,7 +466,8 @@ func TestGetReportSummaryHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		mock.ExpectQuery("SELECT (.+) FROM report_summaries WHERE game_id").
 			WithArgs(999).
@@ -367,7 +498,8 @@ func TestGetReportSummaryHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		rows := sqlmock.NewRows([]string{"id", "game_id", "summary"}).
 			AddRow(1, 123, "")
@@ -411,13 +543,14 @@ func TestGetUserReportsHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		rows := sqlmock.NewRows([]string{"id", "created_at", "game_id", "game_name", "cover_art", "user_id", "platform", "score", "report"}).
-			AddRow(1, "2024-01-01", 123, "Test Game 1", "cover1.jpg", 42, types.PC, 8, "My first report").
-			AddRow(2, "2024-01-02", 456, "Test Game 2", "cover2.jpg", 42, types.Playstation, 9, "My second report")
+			AddRow(1, time.Now(), 123, "Test Game 1", "cover1.jpg", 42, types.PC, 8, "My first report").
+			AddRow(2, time.Now(), 456, "Test Game 2", "cover2.jpg", 42, types.Playstation, 9, "My second report")
 
-		mock.ExpectQuery("SELECT (.+) FROM reports r JOIN games g").
+		mock.ExpectQuery("SELECT (.+) FROM reports r LEFT JOIN games g ON r.game_id = g.id WHERE r.user_id").
 			WithArgs(42).
 			WillReturnRows(rows)
 
@@ -456,7 +589,8 @@ func TestGetUserReportsHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		req := httptest.NewRequest("GET", "/user/reports", nil)
 		w := httptest.NewRecorder()
@@ -478,7 +612,8 @@ func TestGetUserReportsHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		// Create JWT token with invalid user ID (not a string)
 		_, tokenString, _ := tokenAuth.Encode(map[string]interface{}{"sub": 123}) // int instead of string
@@ -504,11 +639,12 @@ func TestGetUserReportsHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
 		rows := sqlmock.NewRows([]string{"id", "created_at", "game_id", "game_name", "cover_art", "user_id", "platform", "score", "report"})
 
-		mock.ExpectQuery("SELECT (.+) FROM reports r JOIN games g").
+		mock.ExpectQuery("SELECT (.+) FROM reports r LEFT JOIN games g ON r.game_id = g.id WHERE r.user_id").
 			WithArgs(42).
 			WillReturnRows(rows)
 
@@ -545,9 +681,10 @@ func TestGetUserReportsHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockAI := &ai.MockAIService{}
+		env := &Env{DB: db.DatabaseModel{DB: mockDB}, AI: mockAI}
 
-		mock.ExpectQuery("SELECT (.+) FROM reports r JOIN games g").
+		mock.ExpectQuery("SELECT (.+) FROM reports r LEFT JOIN games g ON r.game_id = g.id WHERE r.user_id").
 			WithArgs(42).
 			WillReturnError(errors.New("database error"))
 

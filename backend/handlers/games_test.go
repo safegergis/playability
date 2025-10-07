@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"playability/db"
+	"playability/pkg/fetch"
 	"playability/types"
 	"strings"
 	"testing"
@@ -22,7 +23,10 @@ func TestGetGamesHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		env := &Env{
+			DB: db.DatabaseModel{DB: mockDB},
+			FS: &fetch.MockFetchService{},
+		}
 
 		// Mock game data
 		gameID := "123"
@@ -76,18 +80,77 @@ func TestGetGamesHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("game not in cache - database error on query", func(t *testing.T) {
+	t.Run("game not in cache - fetches from external API", func(t *testing.T) {
 		mockDB, mock, err := sqlmock.New()
 		if err != nil {
 			t.Fatalf("Failed to create mock: %v", err)
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
-
 		gameID := "123"
+		mockGameData := []byte(`{"id": 123, "name": "Fetched Game", "summary": "From API", "cover_art": "api.jpg"}`)
+
+		mockFetch := &fetch.MockFetchService{
+			GetGameResponse: mockGameData,
+		}
+
+		env := &Env{
+			DB: db.DatabaseModel{DB: mockDB},
+			FS: mockFetch,
+		}
 
 		// QueryGame returns not found (sql.ErrNoRows)
+		mock.ExpectQuery("SELECT id, name, summary, cover_art, platforms").
+			WithArgs(gameID).
+			WillReturnError(sql.ErrNoRows)
+
+		// Expect InsertGame to be called (uses QueryRow with RETURNING)
+		mock.ExpectQuery("INSERT INTO games").
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(123))
+
+		req := httptest.NewRequest("GET", "/games?id="+gameID, nil)
+		w := httptest.NewRecorder()
+
+		env.GetGamesHandler(w, req)
+
+		// Should successfully return the fetched game
+		if w.Code != http.StatusOK {
+			t.Errorf("GetGamesHandler() status = %d, want %d. Body: %s", w.Code, http.StatusOK, w.Body.String())
+		}
+
+		// Verify fetch was called
+		if mockFetch.GetGameCallCount != 1 {
+			t.Errorf("GetGame called %d times, want 1", mockFetch.GetGameCallCount)
+		}
+
+		if mockFetch.LastGameID != gameID {
+			t.Errorf("GetGame called with gameID %s, want %s", mockFetch.LastGameID, gameID)
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("Unfulfilled expectations: %v", err)
+		}
+	})
+
+	t.Run("fetch fails when game not in cache", func(t *testing.T) {
+		mockDB, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("Failed to create mock: %v", err)
+		}
+		defer mockDB.Close()
+
+		gameID := "456"
+
+		mockFetch := &fetch.MockFetchService{
+			GetGameError: sql.ErrConnDone,
+		}
+
+		env := &Env{
+			DB: db.DatabaseModel{DB: mockDB},
+			FS: mockFetch,
+		}
+
+		// QueryGame returns not found
 		mock.ExpectQuery("SELECT id, name, summary, cover_art, platforms").
 			WithArgs(gameID).
 			WillReturnError(sql.ErrNoRows)
@@ -97,40 +160,14 @@ func TestGetGamesHandler(t *testing.T) {
 
 		env.GetGamesHandler(w, req)
 
-		// When not found in DB, it tries to fetch from external API
-		// Since we haven't mocked fetch.GetGame, this will fail
-		// The actual behavior depends on fetch package implementation
-		// For now, we just verify the DB query was attempted
-
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("Unfulfilled expectations: %v", err)
-		}
-	})
-
-	t.Run("database query error returns error", func(t *testing.T) {
-		mockDB, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("Failed to create mock: %v", err)
-		}
-		defer mockDB.Close()
-
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
-
-		gameID := "456"
-
-		// QueryGame returns error (not sql.ErrNoRows)
-		mock.ExpectQuery("SELECT id, name, summary, cover_art, platforms").
-			WithArgs(gameID).
-			WillReturnError(sql.ErrConnDone)
-
-		req := httptest.NewRequest("GET", "/games?id="+gameID, nil)
-		w := httptest.NewRecorder()
-
-		env.GetGamesHandler(w, req)
-
-		// Handler returns error immediately on DB error (not sql.ErrNoRows)
+		// Handler should return error when fetch fails
 		if w.Code != http.StatusNotFound {
 			t.Errorf("GetGamesHandler() status = %d, want %d", w.Code, http.StatusNotFound)
+		}
+
+		// Verify fetch was attempted
+		if mockFetch.GetGameCallCount != 1 {
+			t.Errorf("GetGame called %d times, want 1", mockFetch.GetGameCallCount)
 		}
 
 		if err := mock.ExpectationsWereMet(); err != nil {
@@ -147,7 +184,10 @@ func TestGetFeaturedHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		env := &Env{
+			DB: db.DatabaseModel{DB: mockDB},
+			FS: &fetch.MockFetchService{},
+		}
 
 		freshTime := time.Now().Add(-12 * time.Hour)
 
@@ -188,14 +228,23 @@ func TestGetFeaturedHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("stale cache triggers fetch - Note: fetch not mocked", func(t *testing.T) {
+	t.Run("stale cache triggers fetch from IGDB", func(t *testing.T) {
 		mockDB, mock, err := sqlmock.New()
 		if err != nil {
 			t.Fatalf("Failed to create mock: %v", err)
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockFeaturedData := []byte(`[{"id": 1, "game_id": 100, "name": "Fresh Game 1", "cover_art": "fresh1.jpg"}, {"id": 2, "game_id": 101, "name": "Fresh Game 2", "cover_art": "fresh2.jpg"}]`)
+
+		mockFetch := &fetch.MockFetchService{
+			GetFeaturedGamesResponse: mockFeaturedData,
+		}
+
+		env := &Env{
+			DB: db.DatabaseModel{DB: mockDB},
+			FS: mockFetch,
+		}
 
 		staleTime := time.Now().Add(-25 * time.Hour)
 
@@ -203,15 +252,42 @@ func TestGetFeaturedHandler(t *testing.T) {
 		mock.ExpectQuery("SELECT MAX\\(updated_at\\) FROM featured_games").
 			WillReturnRows(sqlmock.NewRows([]string{"max"}).AddRow(staleTime))
 
+		// Expect UpsertFeaturedGames to be called (transaction with DELETE + prepared INSERT)
+		mock.ExpectBegin()
+		mock.ExpectExec("DELETE FROM featured_games").
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectPrepare("INSERT INTO featured_games")
+		// Expect two Exec calls (one per game)
+		mock.ExpectExec("INSERT INTO featured_games").
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec("INSERT INTO featured_games").
+			WillReturnResult(sqlmock.NewResult(2, 1))
+		mock.ExpectCommit()
+
 		req := httptest.NewRequest("GET", "/featured", nil)
 		w := httptest.NewRecorder()
 
 		env.GetFeaturedHandler(w, req)
 
-		// Since fetch.GetFeaturedGames() is not mocked, it will fail
-		// The handler should return an error
-		if w.Code == http.StatusOK {
-			t.Error("GetFeaturedHandler() should fail when fetch is not available")
+		// Should successfully return the fetched games
+		if w.Code != http.StatusOK {
+			t.Errorf("GetFeaturedHandler() status = %d, want %d. Body: %s", w.Code, http.StatusOK, w.Body.String())
+		}
+
+		// Verify fetch was called
+		if mockFetch.GetFeaturedGamesCallCount != 1 {
+			t.Errorf("GetFeaturedGames called %d times, want 1", mockFetch.GetFeaturedGamesCallCount)
+		}
+
+		// Verify response contains the fetched data
+		var games []types.FeaturedGame
+		err = json.NewDecoder(w.Body).Decode(&games)
+		if err != nil {
+			t.Errorf("GetFeaturedHandler() returned invalid JSON: %v", err)
+		}
+
+		if len(games) != 2 {
+			t.Errorf("GetFeaturedHandler() returned %d games, want 2", len(games))
 		}
 
 		if err := mock.ExpectationsWereMet(); err != nil {
@@ -226,20 +302,44 @@ func TestGetFeaturedHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		mockFeaturedData := []byte(`[{"id": 1, "game_id": 200, "name": "New Game", "cover_art": "new.jpg"}]`)
+
+		mockFetch := &fetch.MockFetchService{
+			GetFeaturedGamesResponse: mockFeaturedData,
+		}
+
+		env := &Env{
+			DB: db.DatabaseModel{DB: mockDB},
+			FS: mockFetch,
+		}
 
 		// Expect cache age check returns NULL (empty cache)
 		mock.ExpectQuery("SELECT MAX\\(updated_at\\) FROM featured_games").
 			WillReturnRows(sqlmock.NewRows([]string{"max"}).AddRow(nil))
+
+		// Expect UpsertFeaturedGames to be called (transaction with prepared INSERT)
+		mock.ExpectBegin()
+		mock.ExpectExec("DELETE FROM featured_games").
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectPrepare("INSERT INTO featured_games")
+		// Expect one Exec call (one game)
+		mock.ExpectExec("INSERT INTO featured_games").
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
 
 		req := httptest.NewRequest("GET", "/featured", nil)
 		w := httptest.NewRecorder()
 
 		env.GetFeaturedHandler(w, req)
 
-		// Since fetch.GetFeaturedGames() is not mocked, it will fail
-		if w.Code == http.StatusOK {
-			t.Error("GetFeaturedHandler() should fail when fetch is not available")
+		// Should successfully fetch and return games
+		if w.Code != http.StatusOK {
+			t.Errorf("GetFeaturedHandler() status = %d, want %d. Body: %s", w.Code, http.StatusOK, w.Body.String())
+		}
+
+		// Verify fetch was called
+		if mockFetch.GetFeaturedGamesCallCount != 1 {
+			t.Errorf("GetFeaturedGames called %d times, want 1", mockFetch.GetFeaturedGamesCallCount)
 		}
 
 		if err := mock.ExpectationsWereMet(); err != nil {
@@ -254,7 +354,10 @@ func TestGetFeaturedHandler(t *testing.T) {
 		}
 		defer mockDB.Close()
 
-		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
+		env := &Env{
+			DB: db.DatabaseModel{DB: mockDB},
+			FS: &fetch.MockFetchService{},
+		}
 
 		// Expect cache age check returns error
 		mock.ExpectQuery("SELECT MAX\\(updated_at\\) FROM featured_games").
@@ -285,27 +388,83 @@ func TestGetFeaturedHandler(t *testing.T) {
 }
 
 func TestGetSearchHandler(t *testing.T) {
-	// Note: GetSearchHandler doesn't use the Env struct or database
-	// It directly calls fetch.GetSearch which would need to be mocked
-	// These tests verify the handler behavior assuming fetch fails
+	t.Run("successful search returns results", func(t *testing.T) {
+		searchTerm := "zelda"
+		mockSearchData := []byte(`[{"id": 1, "name": "The Legend of Zelda"}, {"id": 2, "name": "Zelda II"}]`)
 
-	t.Run("search with term - fetch not mocked", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/search?search=zelda", nil)
+		mockFetch := &fetch.MockFetchService{
+			GetSearchResponse: mockSearchData,
+		}
+
+		env := &Env{
+			FS: mockFetch,
+		}
+
+		req := httptest.NewRequest("GET", "/search?search="+searchTerm, nil)
 		w := httptest.NewRecorder()
 
-		GetSearchHandler(w, req)
+		env.GetSearchHandler(w, req)
 
-		// Since fetch.GetSearch is not mocked, this will likely fail
-		// The actual behavior depends on fetch implementation
-		// Just verify the handler runs without panicking
+		if w.Code != http.StatusOK {
+			t.Errorf("GetSearchHandler() status = %d, want %d. Body: %s", w.Code, http.StatusOK, w.Body.String())
+		}
+
+		// Verify fetch was called with correct search term
+		if mockFetch.GetSearchCallCount != 1 {
+			t.Errorf("GetSearch called %d times, want 1", mockFetch.GetSearchCallCount)
+		}
+
+		if mockFetch.LastSearchTerm != searchTerm {
+			t.Errorf("GetSearch called with term %s, want %s", mockFetch.LastSearchTerm, searchTerm)
+		}
+
+		// Verify response is valid JSON
+		if w.Header().Get("Content-Type") != "application/json" {
+			t.Errorf("Content-Type = %s, want application/json", w.Header().Get("Content-Type"))
+		}
 	})
 
 	t.Run("search with empty term", func(t *testing.T) {
+		mockFetch := &fetch.MockFetchService{
+			GetSearchResponse: []byte(`[]`),
+		}
+
+		env := &Env{
+			FS: mockFetch,
+		}
+
 		req := httptest.NewRequest("GET", "/search?search=", nil)
 		w := httptest.NewRecorder()
 
-		GetSearchHandler(w, req)
+		env.GetSearchHandler(w, req)
 
-		// Empty search term behavior depends on fetch.GetSearch
+		// Should still call fetch (behavior depends on IGDB API)
+		if mockFetch.GetSearchCallCount != 1 {
+			t.Errorf("GetSearch called %d times, want 1", mockFetch.GetSearchCallCount)
+		}
+
+		if mockFetch.LastSearchTerm != "" {
+			t.Errorf("GetSearch called with term %s, want empty string", mockFetch.LastSearchTerm)
+		}
+	})
+
+	t.Run("fetch error returns error", func(t *testing.T) {
+		mockFetch := &fetch.MockFetchService{
+			GetSearchError: sql.ErrConnDone,
+		}
+
+		env := &Env{
+			FS: mockFetch,
+		}
+
+		req := httptest.NewRequest("GET", "/search?search=zelda", nil)
+		w := httptest.NewRecorder()
+
+		env.GetSearchHandler(w, req)
+
+		// Should return error when fetch fails
+		if w.Code != http.StatusNotFound {
+			t.Errorf("GetSearchHandler() status = %d, want %d", w.Code, http.StatusNotFound)
+		}
 	})
 }

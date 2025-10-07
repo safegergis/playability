@@ -6,6 +6,8 @@ import (
 	"playability/auth"
 	"playability/db"
 	"playability/handlers"
+	"playability/pkg/ai"
+	"playability/pkg/fetch"
 	"playability/pkg/mail"
 	"time"
 
@@ -46,7 +48,7 @@ func (env *Env) MountMiddleware() {
 // MountHandlers sets up the routes and their corresponding handlers
 func (env *Env) MountHandlers() {
 	// Set up routes for search and games
-	env.router.Get("/search", handlers.GetSearchHandler)
+	env.router.Get("/search", env.handlers.GetSearchHandler)
 	env.router.Get("/games", env.handlers.GetGamesHandler)
 	env.router.Get("/featured", env.handlers.GetFeaturedHandler)
 
@@ -89,17 +91,28 @@ func main() {
 	database := db.InitDB()
 	// Generate the authentication token
 	authtoken := auth.GenerateAuthToken()
+
+	// Initialize mail service
 	mailServiceLogger := hclog.New(&hclog.LoggerOptions{
 		Name:  "MailServiceLogger",
 		Level: hclog.Debug,
 	})
 	mail := mail.NewMSMailService(mailServiceLogger, os.Getenv("MAIL_SENDER_API"))
+
+	// Initialize AI service
+	aiService := ai.NewClaudeAIService(os.Getenv("CLAUDE_API_KEY"))
+
+	// Initialize fetch service
+	fetchService := fetch.NewIGDBService(os.Getenv("IGDB_ACCESS_TOKEN"))
+
 	// Set up the application environment
 	env := &Env{
 		router: chi.NewRouter(),
 		handlers: &handlers.Env{
 			DB: db.DatabaseModel{DB: database},
 			MS: mail,
+			AI: aiService,
+			FS: fetchService,
 		},
 		authtoken: authtoken,
 	}

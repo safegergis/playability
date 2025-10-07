@@ -323,10 +323,10 @@ func TestQueryUser(t *testing.T) {
 		dbModel := DatabaseModel{DB: db}
 		userID := 42
 
-		rows := sqlmock.NewRows([]string{"id", "username", "email", "hash", "num_reports"}).
-			AddRow(42, "testuser", "test@example.com", "hash123", 5)
+		rows := sqlmock.NewRows([]string{"id", "username", "email", "hash", "verified", "num_reports"}).
+			AddRow(42, "testuser", "test@example.com", "hash123", true, 5)
 
-		mock.ExpectQuery("SELECT id, username, email, hash, num_reports FROM users WHERE id").
+		mock.ExpectQuery("SELECT id, username, email, hash, verified, num_reports FROM users WHERE id").
 			WithArgs(userID).
 			WillReturnRows(rows)
 
@@ -362,7 +362,7 @@ func TestQueryUser(t *testing.T) {
 		dbModel := DatabaseModel{DB: db}
 		userID := 999
 
-		mock.ExpectQuery("SELECT id, username, email, hash, num_reports FROM users WHERE id").
+		mock.ExpectQuery("SELECT id, username, email, hash, verified, num_reports FROM users WHERE id").
 			WithArgs(userID).
 			WillReturnError(sql.ErrNoRows)
 
@@ -389,7 +389,7 @@ func TestQueryUser(t *testing.T) {
 		dbModel := DatabaseModel{DB: db}
 		userID := 42
 
-		mock.ExpectQuery("SELECT id, username, email, hash, num_reports FROM users WHERE id").
+		mock.ExpectQuery("SELECT id, username, email, hash, verified, num_reports FROM users WHERE id").
 			WithArgs(userID).
 			WillReturnError(errors.New("database error"))
 

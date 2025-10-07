@@ -364,11 +364,11 @@ func TestPostLoginUser(t *testing.T) {
 			WithArgs("test@example.com").
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(42))
 
-		// Expect QueryUser - note: doesn't return 'verified' column, so Verified defaults to false
-		mock.ExpectQuery("SELECT id, username, email, hash, num_reports FROM users WHERE id").
+		// Expect QueryUser
+		mock.ExpectQuery("SELECT id, username, email, hash, verified, num_reports FROM users WHERE id").
 			WithArgs(42).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "username", "email", "hash", "num_reports"}).
-				AddRow(42, "testuser", "test@example.com", hash, 5))
+			WillReturnRows(sqlmock.NewRows([]string{"id", "username", "email", "hash", "verified", "num_reports"}).
+				AddRow(42, "testuser", "test@example.com", hash, false, 5))
 
 		req := httptest.NewRequest("POST", "/user/login", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -608,7 +608,7 @@ func TestPostLoginUser(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(42))
 
 		// Expect QueryUser fails
-		mock.ExpectQuery("SELECT id, username, email, hash, num_reports FROM users WHERE id").
+		mock.ExpectQuery("SELECT id, username, email, hash, verified, num_reports FROM users WHERE id").
 			WithArgs(42).
 			WillReturnError(errors.New("database error"))
 
@@ -639,10 +639,10 @@ func TestGetUserHandler(t *testing.T) {
 
 		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
 
-		mock.ExpectQuery("SELECT id, username, email, hash, num_reports FROM users WHERE id").
+		mock.ExpectQuery("SELECT id, username, email, hash, verified, num_reports FROM users WHERE id").
 			WithArgs(42).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "username", "email", "hash", "num_reports"}).
-				AddRow(42, "testuser", "test@example.com", "hash123", 5))
+			WillReturnRows(sqlmock.NewRows([]string{"id", "username", "email", "hash", "verified", "num_reports"}).
+				AddRow(42, "testuser", "test@example.com", "hash123", true, 5))
 
 		req := httptest.NewRequest("GET", "/user/42", nil)
 		w := httptest.NewRecorder()
@@ -707,7 +707,7 @@ func TestGetUserHandler(t *testing.T) {
 
 		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
 
-		mock.ExpectQuery("SELECT id, username, email, hash, num_reports FROM users WHERE id").
+		mock.ExpectQuery("SELECT id, username, email, hash, verified, num_reports FROM users WHERE id").
 			WithArgs(999).
 			WillReturnError(sql.ErrNoRows)
 
@@ -741,7 +741,7 @@ func TestGetUserHandler(t *testing.T) {
 
 		env := &Env{DB: db.DatabaseModel{DB: mockDB}}
 
-		mock.ExpectQuery("SELECT id, username, email, hash, num_reports FROM users WHERE id").
+		mock.ExpectQuery("SELECT id, username, email, hash, verified, num_reports FROM users WHERE id").
 			WithArgs(42).
 			WillReturnError(errors.New("database error"))
 

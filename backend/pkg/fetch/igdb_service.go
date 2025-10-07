@@ -2,26 +2,45 @@ package fetch
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"playability/types"
 	"strconv"
 )
 
-func GetSearch(searchTerm string) ([]byte, error) {
-	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
-	if igdbSecret == "" {
+// IGDBService implements FetchService using IGDB and PCGamingWiki APIs
+type IGDBService struct {
+	apiKey     string
+	httpClient *http.Client
+	clientID   string
+}
+
+// NewIGDBService creates a new IGDBService with the given API key
+func NewIGDBService(apiKey string) *IGDBService {
+	if apiKey == "" {
+		log.Printf("[IGDBService] Warning: API key is empty - API calls will fail")
+	}
+	return &IGDBService{
+		apiKey:     apiKey,
+		httpClient: http.DefaultClient,
+		clientID:   "7bzjkp4ruewaj55ofw7atbugy7p0au",
+	}
+}
+
+// GetSearch searches for games by search term
+func (s *IGDBService) GetSearch(ctx context.Context, searchTerm string) ([]byte, error) {
+	if s.apiKey == "" {
 		return nil, fmt.Errorf("IGDB_ACCESS_TOKEN environment variable is not set")
 	}
 
 	postBody := fmt.Sprintf("fields id,name;where platforms = (167,169,48,49,6,130) & game_type = (0,8,9) & version_parent = null; search \"%s\"; limit 50;", searchTerm)
 	log.Printf("[GetSearch] Searching for: %s", searchTerm)
 
-	body, err := makeIgdbRequest(postBody, igdbSecret, "games")
+	body, err := s.makeIgdbRequest(ctx, postBody, "games")
 	if err != nil {
 		log.Printf("[GetSearch] Error fetching search results for '%s': %v", searchTerm, err)
 		return nil, fmt.Errorf("failed to search games: %w", err)
@@ -31,13 +50,11 @@ func GetSearch(searchTerm string) ([]byte, error) {
 	return body, nil
 }
 
-// getGame retrieves detailed information about a specific game
-func GetGame(gameID string) ([]byte, error) {
-	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
-
+// GetGame retrieves detailed information about a specific game
+func (s *IGDBService) GetGame(ctx context.Context, gameID string) ([]byte, error) {
 	// Fetch game details from IGDB
 	postBody := fmt.Sprintf("fields name,cover,summary,platforms,involved_companies,external_games; where id = %s;", gameID)
-	body, err := makeIgdbRequest(postBody, igdbSecret, "games")
+	body, err := s.makeIgdbRequest(ctx, postBody, "games")
 	if err != nil {
 		log.Printf("[GetGame] Error fetching game %s: %v", gameID, err)
 		return nil, fmt.Errorf("error making IGDB games request: %w", err)
@@ -59,9 +76,10 @@ func GetGame(gameID string) ([]byte, error) {
 	}
 	game := games[0]
 	log.Printf("[GetGame] Found game: %s (ID: %d)", game.Name, game.ID)
+
 	// Fetch steamID details
 	postBody = fmt.Sprintf("fields uid; where game = %d & external_game_source = 1;", game.ID)
-	body, err = makeIgdbRequest(postBody, igdbSecret, "external_games")
+	body, err = s.makeIgdbRequest(ctx, postBody, "external_games")
 	if err != nil {
 		log.Printf("[GetGame] Error fetching external games for game ID %d: %v", game.ID, err)
 		return nil, fmt.Errorf("error making IGDB external games request: %w", err)
@@ -73,6 +91,7 @@ func GetGame(gameID string) ([]byte, error) {
 		log.Printf("[GetGame] Error unmarshalling external games. Response: %s", string(body))
 		return nil, fmt.Errorf("error unmarshalling IGDB external games response: %w", err)
 	}
+
 	steamID := ""
 	steamAvailability := false
 	if len(externalGames) == 0 {
@@ -84,7 +103,7 @@ func GetGame(gameID string) ([]byte, error) {
 
 	// Fetch cover art details
 	postBody = fmt.Sprintf("fields image_id; where id = %d;", game.Cover)
-	body, err = makeIgdbRequest(postBody, igdbSecret, "covers")
+	body, err = s.makeIgdbRequest(ctx, postBody, "covers")
 	if err != nil {
 		log.Printf("[GetGame] Error fetching cover art for cover ID %d: %v", game.Cover, err)
 		return nil, fmt.Errorf("error making IGDB covers request: %w", err)
@@ -102,145 +121,28 @@ func GetGame(gameID string) ([]byte, error) {
 	}
 
 	// Fetch accessibility information from PCGamingWiki
-	// Closed captions
-
 	closedCaptions := "unknown"
 	colorBlind := "unknown"
 	fullControllerSupport := "unknown"
 	controllerRemapping := "unknown"
+
 	if steamAvailability {
-		// Create a new HTTP request to fetch closed captions information from PCGamingWiki
 		log.Printf("[GetGame] Fetching accessibility data from PCGamingWiki for Steam ID: %s", steamID)
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://www.pcgamingwiki.com/w/api.php?action=cargoquery&tables=Infobox_game,Audio&fields=Audio.Closed_captions&join_on=Infobox_game._pageID=Audio._PageID&where=Infobox_game.Steam_AppID%%20HOLDS%%20%%22%s%%22&format=json", steamID), nil)
-		if err != nil {
-			log.Printf("[GetGame] Error creating PCGamingWiki request for closed captions: %v", err)
-			closedCaptions = "unknown"
-		} else {
-			// Set User-Agent header
-			req.Header.Add("User-Agent", "Playability/1.0")
-			// Send the request
-			resp, err := http.DefaultClient.Do(req)
-			if err != nil {
-				log.Printf("[GetGame] Error making PCGamingWiki closed captions request: %v", err)
-				closedCaptions = "unknown"
-			} else if resp.StatusCode != http.StatusOK {
-				log.Printf("[GetGame] PCGamingWiki closed captions returned status %d for Steam ID %s", resp.StatusCode, steamID)
-				closedCaptions = "unknown"
-				resp.Body.Close()
-			} else {
-				defer resp.Body.Close()
-				body, err = io.ReadAll(resp.Body)
-				if err != nil {
-					log.Printf("[GetGame] Error reading PCGamingWiki closed captions response: %v", err)
-					closedCaptions = "unknown"
-				} else {
-					var response types.PCGamingWikiResponse
-					err = json.Unmarshal(body, &response)
-					if err != nil {
-						log.Printf("[GetGame] Error unmarshalling PCGamingWiki closed captions. Response: %s", string(body))
-						closedCaptions = "unknown"
-					} else if len(response.CargoQuery) != 0 {
-						closedCaptions = response.CargoQuery[0].Title.ClosedCaptions
-						log.Printf("[GetGame] Closed captions for Steam ID %s: %s", steamID, closedCaptions)
-					} else {
-						log.Printf("[GetGame] No closed captions data found for Steam ID %s", steamID)
-						closedCaptions = "unknown"
-					}
-				}
-			}
-		}
 
-		// Create a new HTTP request to fetch color blind mode information from PCGamingWiki
-		req, err = http.NewRequest(http.MethodGet, fmt.Sprintf("https://www.pcgamingwiki.com/w/api.php?action=cargoquery&tables=Infobox_game,Video&fields=Video.Color_blind&join_on=Infobox_game._pageID=Video._PageID&where=Infobox_game.Steam_AppID%%20HOLDS%%20%%22%s%%22&format=json", steamID), nil)
-		if err != nil {
-			log.Printf("[GetGame] Error creating PCGamingWiki color blind request: %v", err)
-			colorBlind = "unknown"
-		} else {
-			// Set User-Agent header
-			req.Header.Add("User-Agent", "Playability/1.0")
-			// Send the request
-			resp, err := http.DefaultClient.Do(req)
+		// Closed captions
+		closedCaptions = s.fetchPCGamingWikiData(ctx, steamID, "Audio", "Audio.Closed_captions")
 
-			if err != nil {
-				log.Printf("[GetGame] Error making PCGamingWiki color blind request: %v", err)
-				colorBlind = "unknown"
-			} else if resp.StatusCode != http.StatusOK {
-				log.Printf("[GetGame] PCGamingWiki color blind returned status %d for Steam ID %s", resp.StatusCode, steamID)
-				colorBlind = "unknown"
-				resp.Body.Close()
-			} else {
-				defer resp.Body.Close()
-				body, err = io.ReadAll(resp.Body)
-				if err != nil {
-					log.Printf("[GetGame] Error reading PCGamingWiki color blind response: %v", err)
-					colorBlind = "unknown"
-				} else {
-					var response2 types.PCGamingWikiResponse
-					err = json.Unmarshal(body, &response2)
-					if err != nil {
-						log.Printf("[GetGame] Error unmarshalling PCGamingWiki color blind. Response: %s", string(body))
-						colorBlind = "unknown"
-					} else if len(response2.CargoQuery) != 0 {
-						colorBlind = response2.CargoQuery[0].Title.ColorBlind
-						log.Printf("[GetGame] Color blind mode for Steam ID %s: %s", steamID, colorBlind)
-					} else {
-						log.Printf("[GetGame] No color blind data found for Steam ID %s", steamID)
-						colorBlind = "unknown"
-					}
-				}
-			}
-		}
+		// Color blind mode
+		colorBlind = s.fetchPCGamingWikiData(ctx, steamID, "Video", "Video.Color_blind")
 
-		// Create a new HTTP request to fetch controller support and remapping information from PCGamingWiki
-		req, err = http.NewRequest(http.MethodGet, fmt.Sprintf("https://www.pcgamingwiki.com/w/api.php?action=cargoquery&tables=Infobox_game,Input&fields=Input.Full_controller_support,Input.Controller_remapping,&join_on=Infobox_game._pageID=Input._PageID&where=Infobox_game.Steam_AppID%%20HOLDS%%20%%22%s%%22&format=json", steamID), nil)
-		if err != nil {
-			log.Printf("[GetGame] Error creating PCGamingWiki controller support request: %v", err)
-			fullControllerSupport = "unknown"
-			controllerRemapping = "unknown"
-		} else {
-			// Set User-Agent header
-			req.Header.Add("User-Agent", "Playability/1.0")
-			// Send the request
-			resp, err := http.DefaultClient.Do(req)
-			if err != nil {
-				log.Printf("[GetGame] Error making PCGamingWiki controller support request: %v", err)
-				fullControllerSupport = "unknown"
-				controllerRemapping = "unknown"
-			} else if resp.StatusCode != http.StatusOK {
-				log.Printf("[GetGame] PCGamingWiki controller support returned status %d for Steam ID %s", resp.StatusCode, steamID)
-				fullControllerSupport = "unknown"
-				controllerRemapping = "unknown"
-				resp.Body.Close()
-			} else {
-				defer resp.Body.Close()
-				body, err = io.ReadAll(resp.Body)
-				if err != nil {
-					log.Printf("[GetGame] Error reading PCGamingWiki controller support response: %v", err)
-					fullControllerSupport = "unknown"
-					controllerRemapping = "unknown"
-				} else {
-					var response3 types.PCGamingWikiResponse
-					err = json.Unmarshal(body, &response3)
-					if err != nil {
-						log.Printf("[GetGame] Error unmarshalling PCGamingWiki controller support. Response: %s", string(body))
-						fullControllerSupport = "unknown"
-						controllerRemapping = "unknown"
-					} else if len(response3.CargoQuery) != 0 {
-						fullControllerSupport = response3.CargoQuery[0].Title.FullControllerSupport
-						controllerRemapping = response3.CargoQuery[0].Title.ControllerRemapping
-						log.Printf("[GetGame] Controller support for Steam ID %s - Full: %s, Remapping: %s", steamID, fullControllerSupport, controllerRemapping)
-					} else {
-						log.Printf("[GetGame] No controller support data found for Steam ID %s", steamID)
-						fullControllerSupport = "unknown"
-						controllerRemapping = "unknown"
-					}
-				}
-			}
-		}
+		// Controller support
+		fullControllerSupport, controllerRemapping = s.fetchPCGamingWikiControllerData(ctx, steamID)
 	}
 
-	//set fetched data to game
-	game.CoverArt = fmt.Sprintf("https://images.igdb.com/igdb/image/upload/t_cover_big/%s.jpg", coverArt[0].ImageID)
+	// Set fetched data to game
+	if len(coverArt) > 0 {
+		game.CoverArt = fmt.Sprintf("https://images.igdb.com/igdb/image/upload/t_cover_big/%s.jpg", coverArt[0].ImageID)
+	}
 
 	game.ClosedCaptions = closedCaptions
 	game.ColorBlind = colorBlind
@@ -257,19 +159,18 @@ func GetGame(gameID string) ([]byte, error) {
 
 	log.Printf("[GetGame] Successfully fetched complete game data for ID %s (%s)", gameID, game.Name)
 	return body, nil
-
 }
 
-func GetFeaturedGames() ([]byte, error) {
-	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
-	if igdbSecret == "" {
+// GetFeaturedGames retrieves a list of featured/popular games
+func (s *IGDBService) GetFeaturedGames(ctx context.Context) ([]byte, error) {
+	if s.apiKey == "" {
 		return nil, fmt.Errorf("IGDB_ACCESS_TOKEN environment variable is not set")
 	}
 
 	postBody := "fields game_id; sort value desc; limit 10; where popularity_type = 2;"
 	log.Printf("[GetFeaturedGames] Fetching featured games")
 
-	body, err := makeIgdbRequest(postBody, igdbSecret, "popularity_primitives")
+	body, err := s.makeIgdbRequest(ctx, postBody, "popularity_primitives")
 	if err != nil {
 		log.Printf("[GetFeaturedGames] Error fetching featured games: %v", err)
 		return nil, fmt.Errorf("error making IGDB features request: %w", err)
@@ -285,7 +186,7 @@ func GetFeaturedGames() ([]byte, error) {
 	log.Printf("[GetFeaturedGames] Found %d featured games", len(featuredGames))
 
 	for i, game := range featuredGames {
-		gameDetails, err := getFeaturedGameDetails(strconv.Itoa(game.GameID))
+		gameDetails, err := s.getFeaturedGameDetails(ctx, strconv.Itoa(game.GameID))
 		if err != nil {
 			log.Printf("[GetFeaturedGames] Error fetching details for game ID %d: %v", game.GameID, err)
 			return nil, fmt.Errorf("error fetching game details for ID %d: %w", game.GameID, err)
@@ -297,6 +198,7 @@ func GetFeaturedGames() ([]byte, error) {
 		featuredGames[i].Name = gameDetails[0].Name
 		featuredGames[i].CoverArt = gameDetails[0].CoverArt
 	}
+
 	body, err = json.Marshal(featuredGames)
 	if err != nil {
 		log.Printf("[GetFeaturedGames] Error marshalling featured games: %v", err)
@@ -306,15 +208,13 @@ func GetFeaturedGames() ([]byte, error) {
 	log.Printf("[GetFeaturedGames] Successfully fetched %d featured games", len(featuredGames))
 	return body, nil
 }
-func getFeaturedGameDetails(gameID string) ([]types.FeaturedGameDetailsResponse, error) {
-	igdbSecret := os.Getenv("IGDB_ACCESS_TOKEN")
-	if igdbSecret == "" {
-		return nil, fmt.Errorf("IGDB_ACCESS_TOKEN environment variable is not set")
-	}
 
+// getFeaturedGameDetails fetches details for a featured game (private helper)
+func (s *IGDBService) getFeaturedGameDetails(ctx context.Context, gameID string) ([]types.FeaturedGameDetailsResponse, error) {
 	log.Printf("[getFeaturedGameDetails] Fetching details for game ID %s", gameID)
+
 	postBody := fmt.Sprintf("fields name,cover; where id = %s;", gameID)
-	body, err := makeIgdbRequest(postBody, igdbSecret, "games")
+	body, err := s.makeIgdbRequest(ctx, postBody, "games")
 	if err != nil {
 		log.Printf("[getFeaturedGameDetails] Error fetching game %s: %v", gameID, err)
 		return nil, fmt.Errorf("error making IGDB games request: %w", err)
@@ -333,7 +233,7 @@ func getFeaturedGameDetails(gameID string) ([]types.FeaturedGameDetailsResponse,
 	}
 
 	postBody = fmt.Sprintf("fields image_id; where id = %d;", gameDetails[0].ImageID)
-	body, err = makeIgdbRequest(postBody, igdbSecret, "covers")
+	body, err = s.makeIgdbRequest(ctx, postBody, "covers")
 	if err != nil {
 		log.Printf("[getFeaturedGameDetails] Error fetching cover for game %s: %v", gameID, err)
 		return nil, fmt.Errorf("error making IGDB covers request: %w", err)
@@ -357,9 +257,9 @@ func getFeaturedGameDetails(gameID string) ([]types.FeaturedGameDetailsResponse,
 	return gameDetails, nil
 }
 
-// makeIgdbRequest sends a request to the IGDB API and returns the response
-func makeIgdbRequest(postBody string, secret string, endpoint string) ([]byte, error) {
-	if secret == "" {
+// makeIgdbRequest sends a request to the IGDB API and returns the response (private helper)
+func (s *IGDBService) makeIgdbRequest(ctx context.Context, postBody string, endpoint string) ([]byte, error) {
+	if s.apiKey == "" {
 		return nil, fmt.Errorf("IGDB access token is empty")
 	}
 
@@ -368,16 +268,16 @@ func makeIgdbRequest(postBody string, secret string, endpoint string) ([]byte, e
 
 	log.Printf("[makeIgdbRequest] Calling IGDB endpoint: %s", endpoint)
 
-	req, err := http.NewRequest(http.MethodPost, endpnt, responseBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpnt, responseBody)
 	if err != nil {
 		log.Printf("[makeIgdbRequest] Error creating request for %s: %v", endpoint, err)
 		return nil, fmt.Errorf("error creating IGDB request: %w", err)
 	}
 
-	req.Header.Add("Client-ID", "7bzjkp4ruewaj55ofw7atbugy7p0au")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", secret))
+	req.Header.Add("Client-ID", s.clientID)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", s.apiKey))
 
-	response, err := http.DefaultClient.Do(req)
+	response, err := s.httpClient.Do(req)
 	if err != nil {
 		log.Printf("[makeIgdbRequest] Error making request to %s: %v", endpoint, err)
 		return nil, fmt.Errorf("error making IGDB request: %w", err)
@@ -398,4 +298,110 @@ func makeIgdbRequest(postBody string, secret string, endpoint string) ([]byte, e
 
 	log.Printf("[makeIgdbRequest] Successfully received %d bytes from %s", len(body), endpoint)
 	return body, nil
+}
+
+// fetchPCGamingWikiData fetches accessibility data from PCGamingWiki (private helper)
+func (s *IGDBService) fetchPCGamingWikiData(ctx context.Context, steamID string, table string, field string) string {
+	url := fmt.Sprintf("https://www.pcgamingwiki.com/w/api.php?action=cargoquery&tables=Infobox_game,%s&fields=%s&join_on=Infobox_game._pageID=%s._PageID&where=Infobox_game.Steam_AppID%%20HOLDS%%20%%22%s%%22&format=json", table, field, table, steamID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		log.Printf("[fetchPCGamingWikiData] Error creating request for %s: %v", field, err)
+		return "unknown"
+	}
+
+	req.Header.Add("User-Agent", "Playability/1.0")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		log.Printf("[fetchPCGamingWikiData] Error making request for %s: %v", field, err)
+		return "unknown"
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("[fetchPCGamingWikiData] PCGamingWiki returned status %d for Steam ID %s", resp.StatusCode, steamID)
+		return "unknown"
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("[fetchPCGamingWikiData] Error reading response for %s: %v", field, err)
+		return "unknown"
+	}
+
+	var response types.PCGamingWikiResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		log.Printf("[fetchPCGamingWikiData] Error unmarshalling response for %s. Response: %s", field, string(body))
+		return "unknown"
+	}
+
+	if len(response.CargoQuery) == 0 {
+		log.Printf("[fetchPCGamingWikiData] No data found for %s (Steam ID: %s)", field, steamID)
+		return "unknown"
+	}
+
+	// Extract the value based on field name
+	switch field {
+	case "Audio.Closed_captions":
+		result := response.CargoQuery[0].Title.ClosedCaptions
+		log.Printf("[fetchPCGamingWikiData] Closed captions for Steam ID %s: %s", steamID, result)
+		return result
+	case "Video.Color_blind":
+		result := response.CargoQuery[0].Title.ColorBlind
+		log.Printf("[fetchPCGamingWikiData] Color blind mode for Steam ID %s: %s", steamID, result)
+		return result
+	default:
+		return "unknown"
+	}
+}
+
+// fetchPCGamingWikiControllerData fetches controller support data (private helper)
+func (s *IGDBService) fetchPCGamingWikiControllerData(ctx context.Context, steamID string) (string, string) {
+	url := fmt.Sprintf("https://www.pcgamingwiki.com/w/api.php?action=cargoquery&tables=Infobox_game,Input&fields=Input.Full_controller_support,Input.Controller_remapping,&join_on=Infobox_game._pageID=Input._PageID&where=Infobox_game.Steam_AppID%%20HOLDS%%20%%22%s%%22&format=json", steamID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		log.Printf("[fetchPCGamingWikiControllerData] Error creating request: %v", err)
+		return "unknown", "unknown"
+	}
+
+	req.Header.Add("User-Agent", "Playability/1.0")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		log.Printf("[fetchPCGamingWikiControllerData] Error making request: %v", err)
+		return "unknown", "unknown"
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("[fetchPCGamingWikiControllerData] PCGamingWiki returned status %d for Steam ID %s", resp.StatusCode, steamID)
+		return "unknown", "unknown"
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("[fetchPCGamingWikiControllerData] Error reading response: %v", err)
+		return "unknown", "unknown"
+	}
+
+	var response types.PCGamingWikiResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		log.Printf("[fetchPCGamingWikiControllerData] Error unmarshalling response. Response: %s", string(body))
+		return "unknown", "unknown"
+	}
+
+	if len(response.CargoQuery) == 0 {
+		log.Printf("[fetchPCGamingWikiControllerData] No controller data found for Steam ID %s", steamID)
+		return "unknown", "unknown"
+	}
+
+	fullSupport := response.CargoQuery[0].Title.FullControllerSupport
+	remapping := response.CargoQuery[0].Title.ControllerRemapping
+	log.Printf("[fetchPCGamingWikiControllerData] Controller support for Steam ID %s - Full: %s, Remapping: %s", steamID, fullSupport, remapping)
+
+	return fullSupport, remapping
 }

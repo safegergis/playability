@@ -5,17 +5,16 @@ import (
 	"log"
 	"net/http"
 
-	"playability/pkg/fetch"
 	"playability/types"
 )
 
-// searchHandler handles search requests for games
-func GetSearchHandler(w http.ResponseWriter, r *http.Request) {
+// GetSearchHandler handles search requests for games
+func (env *Env) GetSearchHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract search term from query parameters
 	searchTerm := r.URL.Query().Get("search")
 
-	// Call getSearch function (not shown) to perform the search
-	body, err := fetch.GetSearch(searchTerm)
+	// Call getSearch function to perform the search
+	body, err := env.FS.GetSearch(r.Context(), searchTerm)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -52,7 +51,7 @@ func (env *Env) GetFeaturedHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Cache is stale or empty, fetch from IGDB
 	log.Printf("[GetFeaturedHandler] Cache stale/empty, fetching from IGDB")
-	body, err := fetch.GetFeaturedGames()
+	body, err := env.FS.GetFeaturedGames(r.Context())
 	if err != nil {
 		log.Printf("[GetFeaturedHandler] Error fetching from IGDB: %v", err)
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -89,8 +88,8 @@ func (env *Env) GetGamesHandler(w http.ResponseWriter, r *http.Request) {
 	// Try to query the game from the database
 	body, err, found := env.DB.QueryGame(gameID)
 	if !found {
-		// If not found in DB, fetch from external source (getGame function not shown)
-		body, err = fetch.GetGame(gameID)
+		// If not found in DB, fetch from external source
+		body, err = env.FS.GetGame(r.Context(), gameID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return

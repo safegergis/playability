@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"playability/pkg/ai"
 	"playability/types"
 	"strconv"
 	"strings"
@@ -58,7 +57,7 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	//TODO: Change this to a queue system to prevent failed requests from killing system
 
-	moderationResponse, err := ai.Moderation(&report)
+	moderationResponse, err := env.AI.Moderation(r.Context(), &report)
 	if err != nil {
 		log.Println("Error moderating report: ", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -102,7 +101,7 @@ func (env *Env) PostReportHandler(w http.ResponseWriter, r *http.Request) {
 				log.Printf("[PostReportHandler] Error querying reports for summarization: %v", err)
 			} else {
 				// Generate summary using AI
-				summary, err := ai.SummarizeReports(reports)
+				summary, err := env.AI.SummarizeReports(r.Context(), reports)
 				if err != nil {
 					log.Printf("[PostReportHandler] Error generating summary: %v", err)
 				} else {
