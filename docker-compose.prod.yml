@@ -21,7 +21,7 @@ services:
       - ./certbot/www:/var/www/certbot
       - ./certbot/certbot_init.sh:/usr/local/bin/certbot_init.sh
     entrypoint: "/usr/local/bin/certbot_init.sh"
-    depebds_on:
+    depends_on:
       - nginx
     command: certonly --webroot -w /var/www/certbot --force-renewal -d playablty.com -d www.playablty.com --email safegerg@gmail.com --rsa-key-size 4096 --agree-tos --non-interactive
     networks:
